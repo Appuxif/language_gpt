@@ -1,0 +1,79 @@
+[tool.black]
+line-length = 120
+skip-string-normalization = true
+
+[tool.isort]
+line_length = '120'
+multi_line_output = '3'
+include_trailing_comma = 'true'
+combine_as_imports = '1'
+known_firstparty = ['project']
+known_third_party = []
+sections = 'FUTURE,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER'
+
+[tool.pylint."MASTER"]
+init-hook = '''
+import sys
+import os
+from pathlib import Path
+
+path = Path(os.path.abspath(os.curdir))
+
+sys.path.append(str(path / 'src'))
+sys.path.append(str(path / 'src' / 'project'))
+'''
+ignore = [
+    'celeryconfig.py',
+]
+
+[tool.pylint."FORMAT"]
+max-line-length = 120
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = [
+    "too-few-public-methods",
+    "too-many-ancestors",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "duplicate-code"
+]
+[tool.pylint."BASIC"]
+good-names = [
+    'rf', 'pk', 'fn', 'cb',
+    'i', 'j', 'k', 'e', 't', 'r',
+    'yes', 'no'
+]
+
+[tool.poetry]
+name = "language-gpt"
+version = "0.1.0"
+description = "A Telegram bot to learn languages with ChatGPT"
+authors = ["Smokost <smokost@gmail.com>"]
+readme = "README.md"
+packages = [
+    {include = "project", from = "src"},
+    {include = "poetry_scripts", from = "src"},
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+motor = "3.1.1"
+python-dotenv = "0.21.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "7.2.0"
+pytest-black = "0.3.12"
+pytest-asyncio = "0.20.3"
+pytest-mock = "3.10.0"
+isort = "5.10.1"
+black = "22.10.0"
+pylint = "2.15.8"
+ipython = "8.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+test = "src.poetry_scripts:test"
+project = "src.poetry_scripts:project"
