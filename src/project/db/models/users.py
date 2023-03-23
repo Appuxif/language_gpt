@@ -1,11 +1,14 @@
+from datetime import datetime
 from enum import Enum
 from typing import ClassVar, Type
+from uuid import uuid4
 
 from bson import ObjectId
 from pydantic import BaseModel, Field
 from pymongo.results import UpdateResult
 
 from project.db.models.base import Model, ModelConfig, ModelManager, PyObjectId
+from project.utils.timezones import now_utc
 
 
 class UserStateType(str, Enum):
@@ -64,6 +67,26 @@ class UserStateGame(ModelConfig, BaseModel):
     game_level: int = 1
 
 
+class UserStateCb(ModelConfig, BaseModel):
+    """User State Callback"""
+
+    id: str = Field(default_factory=lambda: uuid4().hex)
+    view_name: str = ''
+    page_num: int | None = None
+    group_id: PyObjectId | None = None
+    word_id: PyObjectId | None = None
+    created_at: datetime | None = Field(default_factory=now_utc)
+    view_params: dict = Field(default_factory=dict)
+    params: dict = Field(default_factory=dict)
+
+
+class UserMainState(ModelConfig, BaseModel):
+    """User Main State"""
+
+    view_name: str = ''
+    callbacks: dict[str, UserStateCb] = Field(default_factory=dict)
+
+
 UserState = (
     UserStateEmpty
     | UserStateCreateGroup
@@ -71,6 +94,7 @@ UserState = (
     | UserStateAddTranslation
     | UserStateDelWord
     | UserStateGame
+    | UserMainState
 )
 
 
@@ -81,7 +105,7 @@ class UserModel(Model):
     username: str = ''
     first_name: str = ''
     last_name: str = ''
-    state: UserState = UserStateEmpty()
+    state: UserMainState = Field(default_factory=UserMainState)
     keyboard_id: int | None = None
 
     manager: ClassVar[Type['UserModelManager']]
