@@ -15,9 +15,9 @@ class MainMessageSender(BaseMessageSender):
 
     async def get_keyboard(self) -> list[list[InlineKeyboardButton]]:
         # cb = UserStateCb
-        # r = self.view.route_resolver.routes_registry
+        r = self.view.route_resolver.routes_registry
         return [
-            # [await self.view.buttons.view_btn(r['USER_GROUPS_VIEW'], 0)],
+            [await self.view.buttons.view_btn(r['USER_GROUPS_VIEW'], 0)],
             # [await self.view.buttons.btn('Публичные подборки', cb(view_name=r['PUBLIC_GROUPS_VIEW']))],
             # [await self.view.buttons.btn('Переводчик', cb(view_name=r['TRANSLATOR_VIEW']))],
             # [await self.view.buttons.btn('Общение с AI', cb(view_name=r['AI_CHAT_VIEW']))],
