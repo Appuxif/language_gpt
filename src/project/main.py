@@ -4,11 +4,16 @@ from logging import getLogger
 from telebot.types import CallbackQuery, Message
 
 from project.core.bot import bot
-from project.core.views.base import Request
+from project.core.views.base import Request, RouteResolver
 from project.core.views.dispatcher import ViewDispatcher
 from project.db.mongodb import get_database
+from project.views.routes import routes
 
 logger = getLogger(__name__)
+
+
+for route in routes:
+    RouteResolver.register_route(route)
 
 
 @bot.message_handler()
