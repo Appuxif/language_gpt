@@ -5,6 +5,8 @@ from project.views.user_groups_views.create_user_group import CreateUserGroupVie
 from project.views.user_groups_views.delete_user_group import DeleteUserGroupView
 from project.views.user_groups_views.user_group import UserGroupView
 from project.views.user_groups_views.user_groups import UserGroupsView
+from project.views.word_learn_views.learn_words import LearnWordsView
+from project.views.word_learn_views.learning_game import LearningGameView
 from project.views.words_views.add_word import AddWordView
 from project.views.words_views.add_word_translation import AddWordTranslationView
 from project.views.words_views.delete_word import DeleteWordView
@@ -31,4 +33,9 @@ routes += [
     Route(DeleteWordView),
     Route(EditWordView),
     Route(EditWordTranslationView),
+]
+
+routes += [
+    Route(LearnWordsView),
+    Route(LearningGameView),
 ]

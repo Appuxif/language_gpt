@@ -28,8 +28,8 @@ class UserGroupMessageSender(BaseMessageSender):
             words_btns.append(btn)
 
         additional_btns = [[await self.view.buttons.view_btn(r['ADD_WORD_VIEW'], 0, group_id=group_id)]]
-        # if bool(user_words):
-        #     additional_btns[0].append(await self.view.buttons.view_btn(r['LEARN_WORDS_VIEW'], 0, group_id=group_id))
+        if bool(user_words):
+            additional_btns[0].append(await self.view.buttons.view_btn(r['LEARN_WORDS_VIEW'], 0, group_id=group_id))
 
         return [
             *words_btns,
