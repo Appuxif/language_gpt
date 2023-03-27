@@ -21,7 +21,7 @@ class UserGroupsMessageSender(BaseMessageSender):
         groups_list = []
         for group in groups:
             callback = cb(view_name=r['USER_GROUP_VIEW'].value, group_id=group.group_id)
-            btn = [await self.view.buttons.btn((await group.wordgroup()).name, callback)]
+            btn = [await self.view.buttons.btn((await group.get_label()), callback)]
             groups_list.append(btn)
 
         return [

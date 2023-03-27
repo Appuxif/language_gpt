@@ -2,7 +2,7 @@ from telebot.types import InlineKeyboardButton
 
 from project.core.views.base import BaseMessageSender, BaseView
 from project.db.models.users import UserStateCb
-from project.db.models.words import UserWordModel, WordGroupModel
+from project.db.models.words import UserWordGroupModel, UserWordModel
 
 
 class UserGroupMessageSender(BaseMessageSender):
@@ -43,8 +43,10 @@ class UserGroupMessageSender(BaseMessageSender):
 
     async def get_keyboard_text(self) -> str:
         group_id = self.view.callback.group_id
-        group = await WordGroupModel.manager().find_one(group_id)
-        return f'{self.view.labels[0]} {group.name}'
+        user = await self.view.request.get_user()
+        groups = UserWordGroupModel.manager().by_wordgroup(group_id).by_user(user.id)
+        group: UserWordGroupModel = await groups.find_one()
+        return f'{self.view.labels[0]} {await group.get_label()}'
 
 
 class UserGroupView(BaseView):

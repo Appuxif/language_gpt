@@ -4,6 +4,7 @@ from pydantic import Field
 
 from project.db.models.base import Model, ModelManager, PyObjectId
 from project.db.models.users import UserModelManager, WithUser
+from project.views.word_learn_views.utils import GameLevel
 
 
 class WordGroupModel(Model):
@@ -70,6 +71,22 @@ class UserWordGroupModel(WithUserGroup, Model):
 
     manager: ClassVar[Type['UserWordGroupModelManager']]
 
+    async def get_label(self) -> str:
+        group = await self.wordgroup()
+        words = UserWordModelManager().by_wordgroup(self.group_id).by_user(self.user_id)
+        pipelines = [
+            {'$match': words.document_filter},
+            {'$group': {'_id': None, 'rating': {'$sum': '$rating'}, 'count': {'$sum': 1}}},
+        ]
+        aggregation = await UserWordModelManager.get_collection().aggregate(pipelines).to_list(None)
+        rating = 0
+        if aggregation:
+            rating = aggregation[0]['rating'] / aggregation[0]['count']
+            rating = min(int(rating / max(GameLevel).min_rating * 100), 100)
+        return f'{group.name} [{rating}%]'
+
+    wordgroup: ClassVar[Callable[[], Coroutine[Any, Any, WordGroupModel]]]
+
 
 class UserWordGroupModelManager(ModelManager[UserWordGroupModel]):
     """User Word Group Model Manager"""
@@ -96,7 +113,8 @@ class UserWordModel(WithUserGroup, Model):
 
     async def get_label(self) -> str:
         word = await self.word()
-        return f'{word.label} [{int(self.rating)}]'
+        rating = min(int(self.rating / max(GameLevel).min_rating * 100), 100)
+        return f'{word.label} [{rating}%]'
 
     word: ClassVar[Callable[[], Coroutine[Any, Any, WordModel]]]
 
