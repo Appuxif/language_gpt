@@ -25,7 +25,7 @@ services:
     env_file:
       - .env
       - .env-docker
-    command: ['poetry', 'run', 'project']
+    command: ['poetry', 'run', 'project-dev']
 
   mongodb:
     image: mongo:6

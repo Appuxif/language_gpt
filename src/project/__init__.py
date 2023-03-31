@@ -1,3 +1,18 @@
-from project.core.logging import configure_logging
+import asyncio
+from logging import getLogger
 
-configure_logging()
+logger = getLogger('project')
+
+
+def exception_handler(_loop, context) -> None:
+    exc = context.get('exception')
+    msg = context.get('message')
+    if exc and msg:
+        logger.error('Exception in loop: `%s: %s`', type(exc).__name__, str(exc))
+    elif msg:
+        logger.error('Exception in loop: `%s`', msg)
+
+
+loop = asyncio.new_event_loop()
+loop.set_exception_handler(exception_handler)
+asyncio.set_event_loop(loop)
