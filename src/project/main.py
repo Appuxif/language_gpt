@@ -4,6 +4,7 @@ from logging import getLogger
 from telebot.types import CallbackQuery, Message
 
 from project.core.bot import bot
+from project.core.logging import configure_logging
 from project.core.views.base import Request, RouteResolver
 from project.core.views.dispatcher import ViewDispatcher
 from project.db.mongodb import get_database
@@ -36,20 +37,16 @@ async def run():
     await bot.polling(non_stop=True)
 
 
-def exception_handler(_loop, context) -> None:
-    exc = context.get('exception')
-    msg = context.get('message')
-    if exc and msg:
-        logger.error('Exception in loop: `%s: %s`', type(exc).__name__, str(exc))
-    elif msg:
-        logger.error('Exception in loop: `%s`', msg)
-
-
-if __name__ == '__main__':
-    loop = asyncio.new_event_loop()
-    loop.set_exception_handler(exception_handler)
+def run_loop():
+    loop = asyncio.get_event_loop()
     try:
         loop.run_until_complete(run())
     finally:
         loop.run_until_complete(loop.shutdown_asyncgens())
         loop.run_until_complete(loop.shutdown_default_executor())
+
+
+configure_logging()
+
+if __name__ == '__main__':
+    run_loop()

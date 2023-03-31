@@ -82,4 +82,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 test = "src.poetry_scripts:test"
-project = "src.poetry_scripts:project"
+project-dev = "src.poetry_scripts.project:run_project_dev"
