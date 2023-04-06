@@ -39,7 +39,7 @@ class Request:
             self.__cached_user__ = await UsersService.get_user_for_message(self.msg or self.callback)
         return self.__cached_user__
 
-    async def get_route(self) -> 'Route':
+    async def get_route(self) -> Route:
 
         route: Route
         if self.__cached_route__ is None:
@@ -58,9 +58,9 @@ class Request:
 class RouteResolver:
     """Route Resolver"""
 
-    routes_registry: dict[str, 'Route'] = {}
+    routes_registry: dict[str, Route] = {}
 
-    def __init__(self, request: Request, route: 'Route'):
+    def __init__(self, request: Request, route: Route):
         self.request = request
         self.route = route
         self.view = route.view
@@ -73,7 +73,7 @@ class RouteResolver:
         return False
 
     @classmethod
-    def register_route(cls, route: 'Route'):
+    def register_route(cls, route: Route):
         cls.routes_registry[route.view.view_name] = route
 
 
@@ -136,7 +136,7 @@ class ButtonsBuilder:
         self.view.user_states.next_user_state.callbacks[callback_data.id] = callback_data
         return InlineKeyboardButton(text, callback_data=callback_data.id)
 
-    async def view_btn(self, route: 'Route', index: int, **kwargs) -> InlineKeyboardButton:
+    async def view_btn(self, route: Route, index: int, **kwargs) -> InlineKeyboardButton:
         label = route.view.labels[index]
         callback_data = UserStateCb(view_name=route.view.view_name, **kwargs)
         return await self.btn(label, callback_data)

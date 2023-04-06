@@ -1,5 +1,4 @@
 from project.core.views.base import Route
-from project.views.dummy import DummyView
 from project.views.main import MainView
 from project.views.user_groups_views.create_user_group import CreateUserGroupView
 from project.views.user_groups_views.delete_user_group import DeleteUserGroupView
@@ -15,7 +14,6 @@ from project.views.words_views.edit_word_translation import EditWordTranslationV
 from project.views.words_views.word import WordView
 
 routes = [
-    Route(DummyView),
     Route(MainView),
 ]
 

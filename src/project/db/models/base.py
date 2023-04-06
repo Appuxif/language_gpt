@@ -92,7 +92,7 @@ class ModelManager(Generic[T], metaclass=ModelManagerMeta):
 
     @classmethod
     def relation_map(cls, field_name, model_field_name):
-        def decorator(model_cls: Type[Model]):
+        def decorator(model_cls: Type[T]) -> Type[T]:
             cls._relation_map.append((model_cls, field_name, model_field_name))
             rel_obj_name = cls.__name__.replace('ModelManager', '').lower()
 
