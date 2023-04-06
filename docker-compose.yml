@@ -28,7 +28,7 @@ services:
     command: ['poetry', 'run', 'project-dev']
 
   mongodb:
-    image: mongo:6
+    image: mongo:6.0.5
     restart: unless-stopped
     env_file:
       - .env
