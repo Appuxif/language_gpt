@@ -34,7 +34,7 @@ class WordMessageSender(BaseMessageSender):
         group_id = self.view.callback.group_id
         user_words = UserWordModel.manager().by_user(user.id).by_wordgroup(group_id).by_word(word_id)
         user_word: UserWordModel = await user_words.find_one()
-        return f'Слово {await user_word.get_label()}'
+        return f'Слово "{await user_word.get_label()}"'
 
 
 class WordView(BaseView):

@@ -1,6 +1,6 @@
 from typing import Any, Callable, ClassVar, Coroutine, Type
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from project.db.models.base import Model, ModelManager, PyObjectId
 from project.db.models.users import UserModelManager, WithUser
@@ -40,6 +40,17 @@ class WordExample(Model):
 
     value: str = ''
     translation: str = ''
+
+    @validator('value', 'translation')
+    def validate_strings(cls, value: str) -> str:
+        value = value.strip()
+        value = value[0].title() + value[1:]
+        return value
+
+    class Config:
+        """Config"""
+
+        validate_assignment = True
 
 
 @WordGroupModelManager.relation_map('group_id', 'id')
