@@ -194,7 +194,7 @@ class BaseView:
     view_name = ''
     edit_keyboard = True
     delete_income_messages = True
-    page_size = 5
+    page_size = 7
     labels = [
         'Базовый вид',
         'В Базовый вид',
@@ -252,7 +252,8 @@ class Paginator:
             skip=(page_num - 1) * self.page_size,
         )
 
-    async def get_pagination(self, total, page_num, **kwargs) -> list[list[InlineKeyboardButton]]:
+    async def get_pagination(self, total: int, page_num: int, **kwargs) -> list[list[InlineKeyboardButton]]:
+        page_num = int(page_num)
         r = self.view.route_resolver.routes_registry
         route = r[self.view.view_name]
 
@@ -260,14 +261,77 @@ class Paginator:
         if total / self.page_size > pages:
             pages += 1
 
-        pages_info = []
-        if pages > 1:
-            pages_info_btns = []
-            callback = UserStateCb(view_name=r['DUMMY'].value)
-            pages_info.append([await self.view.buttons.btn(f'Страница {page_num} из {pages}', callback)])
-            pages_info.append(pages_info_btns)
+        def page_label(num: int):
+            if num == page_num:
+                return f'-{num}-'
+            return str(num)
+
+        pages_info = [[]]
+        if pages <= 1:
+            pages_info.clear()
+
+        elif 1 < pages < 7:
+
             for i in range(pages):
                 callback = UserStateCb(view_name=route.value, page_num=i + 1, **kwargs)
-                pages_info_btns.append(await self.view.buttons.btn(str(i + 1), callback))
+                pages_info[0].append(await self.view.buttons.btn(page_label(i + 1), callback))
+
+        elif pages >= 7 and page_num < 5:
+            #   .
+            # ['1', '2', '3', '4', '5', '>>', '99']
+            #        .
+            # ['1', '2', '3', '4', '5', '>>', '99']
+            #             .
+            # ['1', '2', '3', '4', '5', '>>', '99']
+            #                  .
+            # ['1', '2', '3', '4', '5', '>>', '99']
+
+            for i in range(5):
+                callback = UserStateCb(view_name=route.value, page_num=i + 1, **kwargs)
+                pages_info[0].append(await self.view.buttons.btn(page_label(i + 1), callback))
+
+            callback = UserStateCb(view_name=route.value, page_num=pages, **kwargs)
+            pages_info[0].append(await self.view.buttons.btn('>>', callback))
+            pages_info[0].append(await self.view.buttons.btn(page_label(pages), callback))
+
+        elif pages >= 7 and page_num > pages - 4:
+            #                    .
+            # ['1', '<<', '95', '96', '97', '98', '99']
+            #                          .
+            # ['1', '<<', '95', '96', '97', '98', '99']
+            #                                .
+            # ['1', '<<', '95', '96', '97', '98', '99']
+            #                                      .
+            # ['1', '<<', '95', '96', '97', '98', '99']
+
+            callback = UserStateCb(view_name=route.value, page_num=1, **kwargs)
+            pages_info[0].append(await self.view.buttons.btn(page_label(1), callback))
+            pages_info[0].append(await self.view.buttons.btn('<<', callback))
+
+            for i in range(pages - 5, pages):
+                callback = UserStateCb(view_name=route.value, page_num=i + 1, **kwargs)
+                pages_info[0].append(await self.view.buttons.btn(page_label(i + 1), callback))
+        elif pages >= 7:
+            #                   .
+            # ['1', '<<', '6', '7', '8', '>>', '99']
+            #                    .
+            # ['1', '<<', '94', '95', '96', '>>', '99']
+
+            callback = UserStateCb(view_name=route.value, page_num=1, **kwargs)
+            pages_info[0].append(await self.view.buttons.btn(page_label(1), callback))
+            pages_info[0].append(await self.view.buttons.btn('<<', callback))
+
+            callback = UserStateCb(view_name=route.value, page_num=page_num - 1, **kwargs)
+            pages_info[0].append(await self.view.buttons.btn(page_label(page_num - 1), callback))
+
+            callback = UserStateCb(view_name=route.value, page_num=page_num, **kwargs)
+            pages_info[0].append(await self.view.buttons.btn(page_label(page_num), callback))
+
+            callback = UserStateCb(view_name=route.value, page_num=page_num + 1, **kwargs)
+            pages_info[0].append(await self.view.buttons.btn(page_label(page_num + 1), callback))
+
+            callback = UserStateCb(view_name=route.value, page_num=pages, **kwargs)
+            pages_info[0].append(await self.view.buttons.btn('>>', callback))
+            pages_info[0].append(await self.view.buttons.btn(page_label(pages), callback))
 
         return pages_info
