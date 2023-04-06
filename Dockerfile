@@ -1,4 +1,4 @@
-FROM python:3.10-buster
+FROM python:3.10.11-buster
 
 RUN mkdir -p /home/project/project
 WORKDIR /home/project/project
