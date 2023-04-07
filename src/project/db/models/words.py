@@ -98,8 +98,7 @@ class UserWordGroupModel(WithUserGroup, Model):
         aggregation = await UserWordModelManager.get_collection().aggregate(pipelines).to_list(None)
         rating = 0
         if aggregation:
-            rating = aggregation[0]['rating'] / aggregation[0]['count']
-            rating = min(int(rating / max(GameLevel).min_rating * 100), 100)
+            rating = GameLevel.compute_percent(aggregation[0]['rating'] / aggregation[0]['count'])
         return f'{group.name} [{rating}%]'
 
     wordgroup: ClassVar[Callable[[], Coroutine[Any, Any, WordGroupModel]]]
@@ -112,7 +111,7 @@ class UserWordGroupModelManager(ModelManager[UserWordGroupModel]):
     model = UserWordGroupModel
 
     by_user: ClassVar[Callable[[PyObjectId | list[PyObjectId]], 'UserWordGroupModelManager']]
-    by_wordgroup: Callable[[PyObjectId | list[PyObjectId]], 'UserWordGroupModelManager']
+    by_wordgroup: ClassVar[Callable[[PyObjectId | list[PyObjectId]], 'UserWordGroupModelManager']]
 
 
 @UserModelManager.relation_map('user_id', 'id')
@@ -130,10 +129,11 @@ class UserWordModel(WithUserGroup, Model):
 
     async def get_label(self) -> str:
         word = await self.word()
-        rating = min(int(self.rating / max(GameLevel).min_rating * 100), 100)
+        rating = GameLevel.compute_percent(self.rating)
         return f'{word.label} [{rating}%]'
 
     word: ClassVar[Callable[[], Coroutine[Any, Any, WordModel]]]
+    wordgroup: ClassVar[Callable[[], Coroutine[Any, Any, WordGroupModel]]]
 
 
 class UserWordModelManager(ModelManager[UserWordModel]):
