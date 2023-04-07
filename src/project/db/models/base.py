@@ -146,7 +146,7 @@ class ModelManager(Generic[T], metaclass=ModelManagerMeta):
                 await obj.delete()
         return await cls.get_collection().delete_one({'_id': model.id})
 
-    def filter(self, document_filter: dict | None = None) -> 'ModelManager[T]':
+    def filter(self, document_filter: dict | None = None) -> 'ModelManager[Model]':
         document_filter = document_filter or {}
         return self.__class__({**self.document_filter, **document_filter})
 
