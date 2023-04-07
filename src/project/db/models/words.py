@@ -47,6 +47,13 @@ class WordExample(Model):
         value = value[0].title() + value[1:]
         return value
 
+    @property
+    def label(self) -> str:
+        return f'{self.value} - {self.translation}'
+
+    def __hash__(self):
+        return hash((self.value, self.translation))
+
     class Config:
         """Config"""
 
@@ -61,9 +68,8 @@ class WordModel(WordExample, WithGroup):
     manager: ClassVar[Type['WordModelManager']]
     is_active: bool = False
 
-    @property
-    def label(self) -> str:
-        return f'{self.value} - {self.translation}'
+    def add_examples(self, examples: list[dict[str, str]]):
+        self.examples = list(set(self.examples + [WordExample.parse_obj(item) for item in examples]))
 
 
 class WordModelManager(ModelManager[WordModel]):
