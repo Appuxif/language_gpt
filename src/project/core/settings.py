@@ -5,6 +5,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+class GENERAL:
+    """General Settings"""
+
+    REPORTS_TELEGRAM_BOT_TOKEN: str = str(os.environ.get('GENERAL_REPORTS_TELEGRAM_BOT_TOKEN', ''))
+    REPORTS_TELEGRAM_CHAT_ID: str = str(os.environ.get('GENERAL_REPORTS_TELEGRAM_CHAT_ID', ''))
+
+
 class TELEGRAM:
     """Telegram Settings"""
 
