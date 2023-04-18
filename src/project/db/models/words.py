@@ -44,7 +44,7 @@ class WordExample(Model):
     @validator('value', 'translation')
     def validate_strings(cls, value: str) -> str:
         value = value.strip()
-        value = value[0].title() + value[1:]
+        value = value[:1].title() + value[1:]
         return value
 
     @property
