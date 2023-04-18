@@ -1,4 +1,7 @@
 FROM python:3.10.11-buster
+RUN apt-get -y update
+RUN apt-get -y upgrade
+RUN apt-get install -y ffmpeg
 
 RUN mkdir -p /home/project/project
 WORKDIR /home/project/project
