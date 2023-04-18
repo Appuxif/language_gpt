@@ -40,6 +40,8 @@ class WordExample(Model):
 
     value: str = ''
     translation: str = ''
+    value_voice: bytes = b''
+    translation_voice: bytes = b''
 
     @validator('value', 'translation')
     def validate_strings(cls, value: str) -> str:
@@ -65,8 +67,8 @@ class WordModel(WordExample, WithGroup):
     """Word Model"""
 
     examples: list[WordExample] = Field(default_factory=list)
-    manager: ClassVar[Type['WordModelManager']]
     is_active: bool = False
+    manager: ClassVar[Type['WordModelManager']]
 
     def add_examples(self, examples: list[dict[str, str]]):
         self.examples = list(set(self.examples + [WordExample.parse_obj(item) for item in examples]))
