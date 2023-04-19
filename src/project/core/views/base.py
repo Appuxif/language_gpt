@@ -163,6 +163,7 @@ class CallbacksManager:
     def __init__(self, view: 'BaseView'):
         self.view = view
         self.callback_answer = ''
+        self.show_alert = True
 
     async def answer_callback(self) -> None:
         if self.view.request.callback:
@@ -170,10 +171,23 @@ class CallbacksManager:
             cb = user.state.callbacks.get(self.view.request.callback.data)
             if cb is None:
                 self.callback_answer = 'Keyboard Invalid'
-            await bot.answer_callback_query(self.view.request.callback.id, self.callback_answer)
+            try:
+                await bot.answer_callback_query(
+                    self.view.request.callback.id,
+                    self.callback_answer,
+                    show_alert=self.show_alert,
+                )
+            except ApiTelegramException as err:
+                if 'query is too old and response timeout expired or query ID is invalid' in err.description:
+                    pass
+                else:
+                    raise err
 
     def set_callback_answer(self, answer: str):
         self.callback_answer = answer
+
+    def set_show_alert(self, show_alert: bool):
+        self.show_alert = show_alert
 
 
 class BaseView:
