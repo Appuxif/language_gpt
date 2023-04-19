@@ -57,11 +57,11 @@ class Model(ModelConfig, BaseModel):
 
     __custom_cache__: _CustomCache = PrivateAttr(default_factory=_CustomCache)
 
-    async def update(self) -> None:
-        await self.manager.update(self)
+    async def update(self, **kwargs) -> None:
+        await self.manager.update(self, **kwargs)
 
-    async def insert(self) -> None:
-        await self.manager.insert(self)
+    async def insert(self, **kwargs) -> None:
+        await self.manager.insert(self, **kwargs)
 
     async def delete(self) -> None:
         await self.manager.delete(self)
@@ -122,16 +122,36 @@ class ModelManager(Generic[T], metaclass=ModelManagerMeta):
         return get_collection(cls.collection)
 
     @classmethod
-    async def insert(cls, model: T) -> InsertOneResult:
-        document = model.dict(by_alias=True, exclude={'id'})
+    async def insert(cls, model: T, **kwargs) -> InsertOneResult:
+
+        include: set | None = kwargs.get('include')
+        exclude: set | None = kwargs.get('exclude')
+
+        if include:
+            exclude = None
+        else:
+            exclude = exclude or set()
+            exclude.add('id')
+
+        document = model.dict(by_alias=True, exclude=exclude, include=include)
         result = await cls.get_collection().insert_one(document)
         model.id = document['_id']
         return result
 
     @classmethod
-    async def update(cls, model: T) -> UpdateResult:
+    async def update(cls, model: T, **kwargs) -> UpdateResult:
+
+        include: set | None = kwargs.get('include')
+        exclude: set | None = kwargs.get('exclude')
+
+        if include:
+            exclude = None
+        else:
+            exclude = exclude or set()
+            exclude.add('id')
+
         return await cls.get_collection().update_one(
-            {'_id': model.id}, {'$set': model.dict(by_alias=True, exclude={'id'})}
+            {'_id': model.id}, {'$set': model.dict(by_alias=True, exclude=exclude, include=include)}
         )
 
     async def update_many(self, *args, **kwargs) -> UpdateResult:
