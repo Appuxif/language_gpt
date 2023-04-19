@@ -1,5 +1,7 @@
 import asyncio
 import re
+from enum import Enum
+from functools import cache
 from logging import getLogger
 from random import choices, randint, shuffle
 from typing import Coroutine
@@ -9,8 +11,9 @@ from telebot.types import InlineKeyboardButton
 from project.core.bot import bot
 from project.core.views.base import BaseMessageSender, BaseView, Route, UserStatesManager
 from project.db.models.users import UserModel, UserStateCb
-from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager
+from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordExample
 from project.services.openai_gpt import add_examples_to_word, whether_translation_is_correct
+from project.services.text_to_speech import add_voices_to_word
 from project.views.word_learn_views.utils import GameLevel
 
 logger = getLogger(__name__)
@@ -19,11 +22,16 @@ logger = getLogger(__name__)
 class LearningGameButtonsBuilder:
     """Learning Game Buttons Builder"""
 
+    class DataType(str, Enum):
+        """Типы данных для отправки пользователю"""
+
+        TEXT = 'text'
+        AUDIO = 'audio'
+
     def __init__(self, view: BaseView, word: UserWordModel):
         self.view = view
         self.word = word
         self.game_level = GameLevel.choose_game_level(word.rating)
-        self.value_or_translation = bool(randint(0, 1))
         self.chosen_word_cb = UserStateCb(
             id='chosen_word',
             view_name=self.r['DUMMY'].value,
@@ -32,24 +40,46 @@ class LearningGameButtonsBuilder:
             params={
                 'game_level': self.game_level.value,
                 'example_id': None,
-                'value_or_translation': self.value_or_translation,
+                'value_or_translation': bool(randint(0, 1)),
             },
         )
+
+    @property
+    def value_or_translation(self) -> bool:
+        return bool(self.chosen_word_cb.params.get('value_or_translation'))
+
+    @value_or_translation.setter
+    def value_or_translation(self, value: bool) -> None:
+        self.chosen_word_cb.params['value_or_translation'] = value
 
     @property
     def r(self) -> dict[str, Route]:
         return self.view.route_resolver.routes_registry
 
-    async def get_chosen_word(self) -> str:
+    async def get_chosen_word(self) -> tuple[WordExample, DataType]:
+        data_type = self.DataType.TEXT
         chosen_word = await self.word.word()
         word_example = chosen_word
+
         if self.game_level in (GameLevel.LEVEL_4,):
+            await add_voices_to_word(word_example)
+            data_type = self.DataType.AUDIO
+            self.value_or_translation = True
+
+        if self.game_level in (GameLevel.LEVEL_5, GameLevel.LEVEL_6):
             if not chosen_word.examples:
                 await add_examples_to_word(chosen_word)
             if chosen_word.examples:
                 word_example = choices(chosen_word.examples)[0]
                 self.chosen_word_cb.params['example_id'] = word_example.id
-        return (word_example.value if self.value_or_translation else word_example.translation) or '--undefined--'
+
+        if self.game_level in (GameLevel.LEVEL_6,):
+            await add_voices_to_word(word_example, save=False)
+            await chosen_word.update(include={'examples'})
+            data_type = self.DataType.AUDIO
+            self.value_or_translation = True
+
+        return word_example, data_type
 
     async def get_buttons_to_choose(self, user_words: list[UserWordModel]) -> list[InlineKeyboardButton]:
         group_id = self.view.callback.group_id
@@ -116,6 +146,7 @@ class LearningGameAnswerProcessor:
             await self.game_level.sub_rating(words)
 
     async def process_answer_text(self) -> None:
+        @cache
         def clean_word(_word: str):
             _word = _word.lower().strip()
             _word = re.sub(r'[^\w\d ]', '', _word)
@@ -134,15 +165,19 @@ class LearningGameAnswerProcessor:
 
         user_word: UserWordModel = await words.find_one()
         word_example = await user_word.word()
-        if self.game_level in (GameLevel.LEVEL_4,) and example_id:
+        if self.game_level in (GameLevel.LEVEL_5, GameLevel.LEVEL_6) and example_id:
             _word_example = next((example for example in word_example.examples if example.id == example_id), None)
             word_example = _word_example or word_example
-        word_to_translate = word_example.translation if value_or_translation else word_example.value
 
-        first_decision = clean_word(self.view.request.msg.text) == clean_word(word_to_translate)
-        decision = first_decision
+        if self.game_level in (GameLevel.LEVEL_4, GameLevel.LEVEL_6):
+            word_to_translate = word_example.value if value_or_translation else word_example.translation
+        else:
+            word_to_translate = word_example.translation if value_or_translation else word_example.value
+
         answer_text = self.view.request.msg.text
-        if self.game_level in (GameLevel.LEVEL_4,) and example_id and decision is False:
+        first_decision = clean_word(answer_text) == clean_word(word_to_translate)
+        decision = first_decision
+        if self.game_level in (GameLevel.LEVEL_5,) and example_id and decision is False:
             try:
                 decision, answer_text = await whether_translation_is_correct(
                     await user_word.word(),
@@ -194,6 +229,10 @@ class LearningGameMessageSender(BaseMessageSender):
             sort=[('rating', 1)], limit=10, prefetch_words=True
         )
 
+        if len(user_words) < 5:
+            self.view.callbacks.set_callback_answer('Нужно выбрать хотя бы пять слов')
+            return []
+
         shuffle(user_words)
         user_word = user_words.pop()
 
@@ -221,14 +260,25 @@ class LearningGameMessageSender(BaseMessageSender):
             return ''
 
         user = await self.view.request.get_user()
-        chosen_word = await self.builder.get_chosen_word()
+        chosen_word, data_type = await self.builder.get_chosen_word()
+        chosen_word_value = (
+            chosen_word.value if self.builder.value_or_translation else chosen_word.translation
+        ) or '--undefined--'
         group = await UserWordGroupModel.manager().by_wordgroup(self.builder.word.group_id).by_user(user.id).find_one()
-        await self.view.buttons.btn(chosen_word, self.builder.chosen_word_cb)
+        await self.view.buttons.btn(chosen_word_value, self.builder.chosen_word_cb)
         chosen_word_callback = user.state.callbacks['chosen_word']
         game_level = GameLevel(chosen_word_callback.params['game_level'])
         text = await group.get_label() + '\n\n'
         text += game_level.info_btn + '\n\n'
-        text += chosen_word
+        if data_type == self.builder.DataType.TEXT:
+            text += chosen_word_value
+        elif data_type == self.builder.DataType.AUDIO:
+            await bot.send_audio(
+                self.view.request.message.chat.id,
+                chosen_word.value_voice,
+                performer='English Learning Bot',
+                title=await group.get_label(),
+            )
 
         return text
 
