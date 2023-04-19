@@ -19,7 +19,7 @@ class AddWordMessageSender(BaseMessageSender):
         if self.view.view_name in user.state.callbacks:
             return ''
 
-        return 'Введи слово:'
+        return 'Введи слово (English):'
 
 
 class AddWordView(BaseView):

@@ -49,6 +49,8 @@ class EditWordTranslationView(BaseView):
         check_cb = user.state.callbacks[self.view_name]
         word: WordModel = await WordModel.manager().find_one(check_cb.word_id)
         word.translation = self.request.msg.text.strip()
+        word.translation_voice = b''
+        word.examples.clear()
         await word.update()
 
         await bot.send_message(self.request.msg.chat.id, f'Введено слово: "{word.label}"')

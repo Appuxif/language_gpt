@@ -22,7 +22,7 @@ class EditWordMessageSender(BaseMessageSender):
         if self.view.view_name in user.state.callbacks:
             return ''
 
-        return 'Введи слово:'
+        return 'Введи слово (English):'
 
 
 class EditWordView(BaseView):
@@ -54,6 +54,8 @@ class EditWordView(BaseView):
         check_cb = user.state.callbacks[self.view_name]
         word: WordModel = await WordModel.manager().find_one(check_cb.word_id)
         word.value = self.request.msg.text.strip()
+        word.value_voice = b''
+        word.examples.clear()
         await word.update()
 
         check_cb.word_id = word.id
