@@ -22,7 +22,7 @@ Three sentences in different tenses with word "{label}" in JSON with keys "value
 async def add_examples_to_word(word: WordModel, save: bool = True) -> None:
     """Запрашивает у GPT примеры использования слова и добавляет их в поле examples с сохранением слова"""
     prompt = EXAMPLES_TO_WORD_PROMPT.format(label=word.label)
-    result = openai.Completion.create(
+    result = await openai.Completion.acreate(
         prompt=prompt,
         model="text-davinci-003",
         max_tokens=2048 - len(prompt),

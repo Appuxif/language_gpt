@@ -40,3 +40,8 @@ async def add_voices_to_word(word: WordExample, save: bool = True) -> None:
 
     if save and need_to_save:
         await word.update(include={'value_voice', 'translation_voice'})
+
+
+async def add_voices_to_word_example(word: WordExample, word_example: WordExample) -> None:
+    await add_voices_to_word(word_example, save=False)
+    await word.update(include={'examples'})

@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional, Type
 
 from telebot.asyncio_helper import ApiTelegramException
@@ -31,7 +32,7 @@ class Request:
         self.__cached_route__: Route | None = None
 
     @property
-    def message(self):
+    def message(self) -> Message:
         return self.msg or self.callback.message
 
     async def get_user(self) -> UserModel:
@@ -113,6 +114,14 @@ class BaseMessageSender:
                         user.keyboard_id = None
                     else:
                         raise
+
+            if user.state.messages_to_delete:
+                await asyncio.gather(
+                    *(bot.delete_message(chat_id, message_id) for chat_id, message_id in user.state.messages_to_delete),
+                    return_exceptions=True,
+                )
+                user.state.messages_to_delete.clear()
+
             keyboard = await bot.send_message(message.chat.id, text, reply_markup=markup)
             user.keyboard_id = keyboard.message_id
 
@@ -132,8 +141,7 @@ class ButtonsBuilder:
     async def btn(self, text: str, callback_data: UserStateCb) -> InlineKeyboardButton:
         user = await self.view.request.get_user()
         assert isinstance(user.state, UserMainState)
-        user.state.callbacks[callback_data.id] = callback_data
-        self.view.user_states.next_user_state.callbacks[callback_data.id] = callback_data
+        self.view.user_states.add_callback(callback_data)
         return InlineKeyboardButton(text, callback_data=callback_data.id)
 
     async def view_btn(self, route: Route, index: int, **kwargs) -> InlineKeyboardButton:
@@ -147,14 +155,28 @@ class UserStatesManager:
 
     def __init__(self, view: 'BaseView'):
         self.view = view
+        self.actual_user_state = UserMainState()
         self.next_user_state = UserMainState()
 
     async def init(self):
+        user = await self.view.request.get_user()
+        self.actual_user_state = user.state
         self.next_user_state = UserMainState()
 
     async def set(self) -> None:
         user = await self.view.request.get_user()
+        user_state = user.state
         user.state = self.next_user_state
+        user.state.messages_to_delete += user_state.messages_to_delete
+
+    def add_message_to_delete(self, chat_id: int, message_id: int, only_next: bool = True):
+        self.next_user_state.add_message_to_delete(chat_id, message_id)
+        if not only_next:
+            self.actual_user_state.add_message_to_delete(chat_id, message_id)
+
+    def add_callback(self, callback_data: UserStateCb):
+        self.next_user_state.callbacks[callback_data.id] = callback_data
+        self.actual_user_state.callbacks[callback_data.id] = callback_data
 
 
 class CallbacksManager:

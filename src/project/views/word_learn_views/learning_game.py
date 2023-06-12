@@ -13,7 +13,7 @@ from project.core.views.base import BaseMessageSender, BaseView, Route, UserStat
 from project.db.models.users import UserModel, UserStateCb
 from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordExample
 from project.services.openai_gpt import add_examples_to_word, whether_translation_is_correct
-from project.services.text_to_speech import add_voices_to_word
+from project.services.text_to_speech import add_voices_to_word, add_voices_to_word_example
 from project.views.word_learn_views.utils import GameLevel
 
 logger = getLogger(__name__)
@@ -56,6 +56,28 @@ class LearningGameButtonsBuilder:
     def r(self) -> dict[str, Route]:
         return self.view.route_resolver.routes_registry
 
+    async def define_game_level(self):
+        self.game_level = GameLevel.choose_game_level(self.word.rating)
+        chosen_word = await self.word.word()
+
+        if self.game_level in (GameLevel.LEVEL_5, GameLevel.LEVEL_6):
+            if not chosen_word.examples:
+                asyncio.create_task(add_examples_to_word(chosen_word))
+                self.game_level = GameLevel.LEVEL_4
+
+        if self.game_level in (GameLevel.LEVEL_6,):
+            for word_example in chosen_word.examples:
+                if not word_example.value_voice or not word_example.translation_voice:
+                    asyncio.create_task(add_voices_to_word_example(chosen_word, word_example))
+                    self.game_level = GameLevel.LEVEL_5
+
+        if self.game_level in (GameLevel.LEVEL_4,):
+            if not chosen_word.value_voice or not chosen_word.translation_voice:
+                asyncio.create_task(add_voices_to_word(chosen_word))
+                self.game_level = GameLevel.LEVEL_3
+
+        self.chosen_word_cb.params['game_level'] = self.game_level.value
+
     async def get_chosen_word(self) -> tuple[WordExample, DataType]:
         data_type = self.DataType.TEXT
         chosen_word = await self.word.word()
@@ -68,14 +90,12 @@ class LearningGameButtonsBuilder:
 
         if self.game_level in (GameLevel.LEVEL_5, GameLevel.LEVEL_6):
             if not chosen_word.examples:
-                asyncio.create_task(add_examples_to_word(chosen_word))
-            else:
-                word_example = choices(chosen_word.examples)[0]
-                self.chosen_word_cb.params['example_id'] = word_example.id
+                await add_examples_to_word(chosen_word)
+            word_example = choices(chosen_word.examples)[0]
+            self.chosen_word_cb.params['example_id'] = word_example.id
 
         if self.game_level in (GameLevel.LEVEL_6,):
-            await add_voices_to_word(word_example, save=False)
-            await chosen_word.update(include={'examples'})
+            await add_voices_to_word_example(chosen_word, word_example)
             data_type = self.DataType.AUDIO
             self.value_or_translation = True
 
@@ -85,6 +105,7 @@ class LearningGameButtonsBuilder:
         group_id = self.view.callback.group_id
         chosen_word = await self.word.word()
         buttons = []
+
         if self.game_level in (GameLevel.LEVEL_1, GameLevel.LEVEL_2):
             buttons = [
                 await self.view.buttons.btn(
@@ -154,10 +175,9 @@ class LearningGameAnswerProcessor:
 
         if self.game_level == GameLevel.LEVEL_1:
             self.view.callbacks.set_callback_answer('☝️ Сейчас нужно ВЫБРАТЬ вариант ответа')
-            await bot.send_message(self.view.request.msg.chat.id, self.view.callbacks.callback_answer)
+            msg = await bot.send_message(self.view.request.msg.chat.id, self.view.callbacks.callback_answer)
+            self.view.user_states.add_message_to_delete(self.view.request.msg.chat.id, msg.message_id)
             return
-
-        self.view.delete_income_messages = False
 
         example_id = self.chosen_word_callback.params.get('example_id')
         value_or_translation = self.chosen_word_callback.params.get('value_or_translation')
@@ -166,8 +186,9 @@ class LearningGameAnswerProcessor:
         user_word: UserWordModel = await words.find_one()
         word_example = await user_word.word()
         if self.game_level in (GameLevel.LEVEL_5, GameLevel.LEVEL_6) and example_id:
-            _word_example = next((example for example in word_example.examples if example.id == example_id), None)
-            word_example = _word_example or word_example
+            word_example = (
+                next((example for example in word_example.examples if example.id == example_id), None) or word_example
+            )
 
         if self.game_level in (GameLevel.LEVEL_4, GameLevel.LEVEL_6):
             word_to_translate = word_example.value if value_or_translation else word_example.translation
@@ -182,7 +203,7 @@ class LearningGameAnswerProcessor:
                 decision, answer_text = await whether_translation_is_correct(
                     await user_word.word(),
                     word_example,
-                    self.view.request.msg.text,
+                    answer_text,
                 )
             except ValueError:
                 logger.exception('whether_translation_is_correct error')
@@ -195,13 +216,21 @@ class LearningGameAnswerProcessor:
                 answer_text += f'\nОтвет принимается. Но более точно будет: {word_to_translate}'
             tasks.append(asyncio.sleep(0.5))
             tasks.append(self.game_level.add_rating(words))
+            only_next = True
         else:
             answer_text = f'🚫 {answer_text}\nПравильный ответ: {word_to_translate}'
             self.view.callbacks.set_callback_answer(answer_text)
             tasks.append(self.game_level.sub_rating(words))
+            only_next = False
 
         tasks.append(bot.send_message(self.view.request.msg.chat.id, answer_text))
-        await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks)
+
+        self.view.user_states.add_message_to_delete(
+            self.view.request.msg.chat.id,
+            results[-1].message_id,
+            only_next=only_next,
+        )
 
 
 class LearningGameMessageSender(BaseMessageSender):
@@ -237,6 +266,7 @@ class LearningGameMessageSender(BaseMessageSender):
         user_word = user_words.pop()
 
         self.builder = LearningGameButtonsBuilder(self.view, user_word)
+        await self.builder.define_game_level()
 
         view_btn_cb = UserStateCb(
             id=self.view.view_name,
@@ -260,25 +290,31 @@ class LearningGameMessageSender(BaseMessageSender):
             return ''
 
         user = await self.view.request.get_user()
+        group = await UserWordGroupModel.manager().by_wordgroup(self.builder.word.group_id).by_user(user.id).find_one()
+
         chosen_word, data_type = await self.builder.get_chosen_word()
         chosen_word_value = (
             chosen_word.value if self.builder.value_or_translation else chosen_word.translation
         ) or '--undefined--'
-        group = await UserWordGroupModel.manager().by_wordgroup(self.builder.word.group_id).by_user(user.id).find_one()
+
         await self.view.buttons.btn(chosen_word_value, self.builder.chosen_word_cb)
         chosen_word_callback = user.state.callbacks['chosen_word']
         game_level = GameLevel(chosen_word_callback.params['game_level'])
+
         text = await group.get_label() + '\n\n'
         text += game_level.info_btn + '\n\n'
+
         if data_type == self.builder.DataType.TEXT:
             text += chosen_word_value
+
         elif data_type == self.builder.DataType.AUDIO:
-            await bot.send_audio(
+            msg = await bot.send_audio(
                 self.view.request.message.chat.id,
                 chosen_word.value_voice,
                 performer='English Learning Bot',
                 title=await group.get_label(),
             )
+            self.view.user_states.add_message_to_delete(self.view.request.message.chat.id, msg.message_id)
 
         return text
 
