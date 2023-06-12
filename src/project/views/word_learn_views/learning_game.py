@@ -68,8 +68,8 @@ class LearningGameButtonsBuilder:
 
         if self.game_level in (GameLevel.LEVEL_5, GameLevel.LEVEL_6):
             if not chosen_word.examples:
-                await add_examples_to_word(chosen_word)
-            if chosen_word.examples:
+                asyncio.create_task(add_examples_to_word(chosen_word))
+            else:
                 word_example = choices(chosen_word.examples)[0]
                 self.chosen_word_cb.params['example_id'] = word_example.id
 
