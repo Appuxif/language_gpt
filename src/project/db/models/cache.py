@@ -2,8 +2,9 @@ from datetime import datetime
 from typing import ClassVar, Type
 
 from pydantic import Field
+from telebot_models.models import BaseModelManager, Model
+from typing_extensions import Self
 
-from project.db.models.base import Model, ModelManager
 from project.utils.timezones import now_utc
 
 
@@ -17,14 +18,14 @@ class CacheModel(Model):
     manager: ClassVar[Type['CacheModelManager']]
 
 
-class CacheModelManager(ModelManager[CacheModel]):
+class CacheModelManager(BaseModelManager[CacheModel]):
     """Cache Model Manager"""
 
     collection = 'caches'
     model: Type[CacheModel] = CacheModel
 
-    def by_key(self, key: str) -> 'CacheModelManager':
+    def by_key(self, key: str) -> Self:
         return self.filter({'key': key})
 
-    def is_valid(self) -> 'CacheModelManager':
+    def is_valid(self) -> Self:
         return self.filter({'valid_until': {'$gt': now_utc()}})

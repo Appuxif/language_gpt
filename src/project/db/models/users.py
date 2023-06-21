@@ -3,8 +3,8 @@ from typing import ClassVar, Type
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
+from telebot_models.models import BaseModelManager, Model, ModelConfig, PyObjectId
 
-from project.db.models.base import Model, ModelConfig, ModelManager, PyObjectId
 from project.utils.timezones import now_utc
 
 
@@ -45,7 +45,7 @@ class UserModel(Model):
     manager: ClassVar[Type['UserModelManager']]
 
 
-class UserModelManager(ModelManager[UserModel]):
+class UserModelManager(BaseModelManager[UserModel]):
     """User Model Manager"""
 
     collection = 'users'

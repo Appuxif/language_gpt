@@ -1,8 +1,8 @@
 from typing import Any, Callable, ClassVar, Coroutine, Type
 
 from pydantic import Field, validator
+from telebot_models.models import BaseModelManager, Model, PyObjectId
 
-from project.db.models.base import Model, ModelManager, PyObjectId
 from project.db.models.users import UserModelManager, WithUser
 from project.views.word_learn_views.utils import GameLevel
 
@@ -16,7 +16,7 @@ class WordGroupModel(Model):
     manager: ClassVar[Type['WordGroupModelManager']]
 
 
-class WordGroupModelManager(ModelManager[WordGroupModel]):
+class WordGroupModelManager(BaseModelManager[WordGroupModel]):
     """Word Group Model Manager"""
 
     collection = 'word_groups'
@@ -74,7 +74,7 @@ class WordModel(WordExample, WithGroup):
         self.examples = list(set(self.examples + [WordExample.parse_obj(item) for item in examples]))
 
 
-class WordModelManager(ModelManager[WordModel]):
+class WordModelManager(BaseModelManager[WordModel]):
     """Word Model Manager"""
 
     collection = 'words'
@@ -106,7 +106,7 @@ class UserWordGroupModel(WithUserGroup, Model):
     wordgroup: ClassVar[Callable[[], Coroutine[Any, Any, WordGroupModel]]]
 
 
-class UserWordGroupModelManager(ModelManager[UserWordGroupModel]):
+class UserWordGroupModelManager(BaseModelManager[UserWordGroupModel]):
     """User Word Group Model Manager"""
 
     collection = 'user_word_groups'
@@ -138,7 +138,7 @@ class UserWordModel(WithUserGroup, Model):
     wordgroup: ClassVar[Callable[[], Coroutine[Any, Any, WordGroupModel]]]
 
 
-class UserWordModelManager(ModelManager[UserWordModel]):
+class UserWordModelManager(BaseModelManager[UserWordModel]):
     """User Word Model Manager"""
 
     collection = 'user_words'

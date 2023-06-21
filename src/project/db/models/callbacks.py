@@ -1,8 +1,7 @@
 from enum import Enum, unique
 
 from pydantic import BaseModel, Field
-
-from project.db.models.base import Model, ModelConfig, ModelManager, PyObjectId
+from telebot_models.models import BaseModelManager, Model, ModelConfig, PyObjectId
 
 
 @unique
@@ -141,7 +140,7 @@ class CallbackModel(Model):
         return str(callback.id)
 
 
-class CallbackModelManager(ModelManager[CallbackModel]):
+class CallbackModelManager(BaseModelManager[CallbackModel]):
     """Callback Model Manager"""
 
     collection = 'callbacks'

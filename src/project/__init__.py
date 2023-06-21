@@ -1,7 +1,14 @@
 import asyncio
 from logging import getLogger
 
+import telebot_models.models
+
+from project.db.mongodb import get_collection
+
 logger = getLogger('project')
+
+
+telebot_models.models.set_collection_getter(get_collection)
 
 
 def exception_handler(_loop, context) -> None:
