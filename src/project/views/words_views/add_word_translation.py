@@ -1,8 +1,8 @@
 from telebot.types import InlineKeyboardButton
+from telebot_views.base import BaseMessageSender, BaseView
+from telebot_views.models import UserStateCb
 
 from project.core.bot import bot
-from project.core.views.base import BaseMessageSender, BaseView
-from project.db.models.users import UserStateCb
 from project.db.models.words import UserWordModel, WordModel
 
 
@@ -11,7 +11,10 @@ class AddWordTranslationMessageSender(BaseMessageSender):
 
     async def get_keyboard(self) -> list[list[InlineKeyboardButton]]:
         r = self.view.route_resolver.routes_registry
-        callback = UserStateCb(view_name=r['USER_GROUP_VIEW'].value, group_id=self.view.callback.group_id)
+        callback = UserStateCb(
+            view_name=r['USER_GROUP_VIEW'].value,
+            params={'group_id': self.view.callback.params.get('group_id')},
+        )
         return [[await self.view.buttons.btn('Отмена', callback)]]
 
     async def get_keyboard_text(self) -> str:
@@ -46,7 +49,12 @@ class AddWordTranslationView(BaseView):
             return None
 
         check_cb = user.state.callbacks[self.view_name]
-        user_words = UserWordModel.manager().by_user(user.id).by_word(check_cb.word_id).by_wordgroup(check_cb.group_id)
+        user_words = (
+            UserWordModel.manager()
+            .by_user(user.id)
+            .by_word(check_cb.params.get('word_id'))
+            .by_wordgroup(check_cb.params.get('group_id'))
+        )
         user_word: UserWordModel = await user_words.by_active([True, False]).find_one()
         user_word.is_active = True
         await user_word.update()
@@ -56,5 +64,8 @@ class AddWordTranslationView(BaseView):
         await word.update()
 
         await bot.send_message(self.request.msg.chat.id, f'Введено слово: "{word.label}"')
-        callback = UserStateCb(view_name=r['USER_GROUP_VIEW'].value, group_id=check_cb.group_id)
+        callback = UserStateCb(
+            view_name=r['USER_GROUP_VIEW'].value,
+            params={'group_id': check_cb.params.get('group_id')},
+        )
         return r['USER_GROUP_VIEW'].view(self.request, callback=callback, edit_keyboard=False)

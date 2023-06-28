@@ -1,8 +1,8 @@
 from telebot.types import InlineKeyboardButton
+from telebot_views.base import BaseMessageSender, BaseView
+from telebot_views.models import UserStateCb
 
 from project.core.bot import ParseMode, bot
-from project.core.views.base import BaseMessageSender, BaseView
-from project.db.models.users import UserStateCb
 from project.db.models.words import WordModel
 
 
@@ -12,18 +12,30 @@ class DeleteWordMessageSender(BaseMessageSender):
     async def get_keyboard(self) -> list[list[InlineKeyboardButton]]:
         cb = UserStateCb
         r = self.view.route_resolver.routes_registry
-        group_id = self.view.callback.group_id
-        word_id = self.view.callback.word_id
+        group_id = self.view.callback.params.get('group_id')
+        word_id = self.view.callback.params.get('word_id')
         user = await self.view.request.get_user()
 
         if self.view.view_name in user.state.callbacks:
             return []
 
         return [
-            [await self.view.buttons.btn('Да', cb(view_name=self.view.view_name, group_id=group_id, word_id=word_id))],
             [
                 await self.view.buttons.btn(
-                    'Отмена', UserStateCb(view_name=r['WORD_VIEW'].value, group_id=group_id, word_id=word_id)
+                    'Да',
+                    cb(
+                        view_name=self.view.view_name,
+                        params={'group_id': group_id, 'word_id': word_id},
+                    ),
+                )
+            ],
+            [
+                await self.view.buttons.btn(
+                    'Отмена',
+                    cb(
+                        view_name=r['WORD_VIEW'].value,
+                        params={'group_id': group_id, 'word_id': word_id},
+                    ),
                 )
             ],
         ]
@@ -32,7 +44,7 @@ class DeleteWordMessageSender(BaseMessageSender):
         user = await self.view.request.get_user()
         if self.view.request.callback and self.view.view_name in user.state.callbacks:
             return ''
-        word: WordModel = await WordModel.manager().find_one(self.view.callback.word_id)
+        word: WordModel = await WordModel.manager().find_one(self.view.callback.params.get('word_id'))
         return f'Удалить слово {word.label}?'
 
 
@@ -59,10 +71,13 @@ class DeleteWordView(BaseView):
         if self.request.callback is None:
             return None
 
-        word: WordModel = await WordModel.manager().find_one(self.callback.word_id)
+        word: WordModel = await WordModel.manager().find_one(self.callback.params.get('word_id'))
         await word.delete()
         text = f'Слово *{word.label}* удалено'
         await bot.send_message(self.request.callback.message.chat.id, text, parse_mode=ParseMode.MARKDOWN.value)
 
-        callback = UserStateCb(view_name=r['USER_GROUP_VIEW'].value, group_id=self.callback.group_id)
+        callback = UserStateCb(
+            view_name=r['USER_GROUP_VIEW'].value,
+            params={'group_id': self.callback.params.get('group_id')},
+        )
         return r['USER_GROUP_VIEW'].view(self.request, callback=callback, edit_keyboard=False)

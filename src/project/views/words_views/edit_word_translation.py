@@ -1,8 +1,8 @@
 from telebot.types import InlineKeyboardButton
+from telebot_views.base import BaseMessageSender, BaseView
+from telebot_views.models import UserStateCb
 
 from project.core.bot import bot
-from project.core.views.base import BaseMessageSender, BaseView
-from project.db.models.users import UserStateCb
 from project.db.models.words import WordModel
 
 
@@ -11,9 +11,12 @@ class EditWordTranslationMessageSender(BaseMessageSender):
 
     async def get_keyboard(self) -> list[list[InlineKeyboardButton]]:
         r = self.view.route_resolver.routes_registry
-        group_id = self.view.callback.group_id
-        word_id = self.view.callback.word_id
-        callback = UserStateCb(view_name=r['WORD_VIEW'].value, group_id=group_id, word_id=word_id)
+        group_id = self.view.callback.params.get('group_id')
+        word_id = self.view.callback.params.get('word_id')
+        callback = UserStateCb(
+            view_name=r['WORD_VIEW'].value,
+            params={'group_id': group_id, 'word_id': word_id},
+        )
         return [[await self.view.buttons.btn('Отмена', callback)]]
 
     async def get_keyboard_text(self) -> str:
@@ -47,12 +50,15 @@ class EditWordTranslationView(BaseView):
             return None
 
         check_cb = user.state.callbacks[self.view_name]
-        word: WordModel = await WordModel.manager().find_one(check_cb.word_id)
+        word: WordModel = await WordModel.manager().find_one(check_cb.params.get('word_id'))
         word.translation = self.request.msg.text.strip()
         word.translation_voice = b''
         word.examples.clear()
         await word.update()
 
         await bot.send_message(self.request.msg.chat.id, f'Введено слово: "{word.label}"')
-        callback = UserStateCb(view_name=r['WORD_VIEW'].value, group_id=check_cb.group_id, word_id=check_cb.word_id)
+        callback = UserStateCb(
+            view_name=r['WORD_VIEW'].value,
+            params={'group_id': check_cb.params.get('group_id'), 'word_id': check_cb.params.get('word_id')},
+        )
         return r['WORD_VIEW'].view(self.request, callback=callback, edit_keyboard=False)

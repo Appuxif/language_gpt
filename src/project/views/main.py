@@ -1,6 +1,5 @@
 from telebot.types import InlineKeyboardButton
-
-from project.core.views.base import BaseMessageSender, BaseView, RouteResolver
+from telebot_views.base import BaseMessageSender, BaseView, RouteResolver
 
 
 class MainRouteResolver(RouteResolver):

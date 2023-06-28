@@ -70,6 +70,12 @@ ipython = "8.7.0"
 google-cloud-texttospeech = "^2.14.1"
 pydub = "0.25.1"
 telebot_models = {url = "https://github.com/Appuxif/telebot_models/archive/refs/tags/0.0.5.tar.gz"}
+telebot_views = {url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.5.tar.gz"}
+
+[tool.pytest.ini_options]
+markers = [
+    "drop_db_collections: drop db collections before test",
+]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "7.2.0"

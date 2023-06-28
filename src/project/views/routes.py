@@ -1,4 +1,5 @@
-from project.core.views.base import Route
+from telebot_views.base import Route
+
 from project.views.main import MainView
 from project.views.user_groups_views.create_user_group import CreateUserGroupView
 from project.views.user_groups_views.delete_user_group import DeleteUserGroupView

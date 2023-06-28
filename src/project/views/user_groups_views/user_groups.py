@@ -1,7 +1,7 @@
 from telebot.types import InlineKeyboardButton
+from telebot_views.base import BaseMessageSender, BaseView
+from telebot_views.models import UserStateCb
 
-from project.core.views.base import BaseMessageSender, BaseView
-from project.db.models.users import UserStateCb
 from project.db.models.words import UserWordGroupModel
 
 
@@ -20,7 +20,7 @@ class UserGroupsMessageSender(BaseMessageSender):
 
         groups_list = []
         for group in groups:
-            callback = cb(view_name=r['USER_GROUP_VIEW'].value, group_id=group.group_id)
+            callback = cb(view_name=r['USER_GROUP_VIEW'].value, params={'group_id': group.group_id})
             btn = [await self.view.buttons.btn((await group.get_label()), callback)]
             groups_list.append(btn)
 

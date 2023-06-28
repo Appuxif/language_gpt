@@ -1,8 +1,8 @@
 from telebot.types import InlineKeyboardButton
+from telebot_views.base import BaseMessageSender, BaseView
+from telebot_views.models import UserStateCb
 
 from project.core.bot import ParseMode, bot
-from project.core.views.base import BaseMessageSender, BaseView
-from project.db.models.users import UserStateCb
 from project.db.models.words import UserWordGroupModel, WordGroupModel
 
 

@@ -7,10 +7,10 @@ from random import choices, randint, shuffle
 from typing import Coroutine
 
 from telebot.types import InlineKeyboardButton
+from telebot_views.base import BaseMessageSender, BaseView, Route, UserStatesManager
+from telebot_views.models import UserModel, UserStateCb
 
 from project.core.bot import bot
-from project.core.views.base import BaseMessageSender, BaseView, Route, UserStatesManager
-from project.db.models.users import UserModel, UserStateCb
 from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordExample
 from project.services.openai_gpt import add_examples_to_word, whether_translation_is_correct
 from project.services.text_to_speech import add_voices_to_word, add_voices_to_word_example
@@ -35,9 +35,9 @@ class LearningGameButtonsBuilder:
         self.chosen_word_cb = UserStateCb(
             id='chosen_word',
             view_name=self.r['DUMMY'].value,
-            group_id=self.view.callback.group_id,
-            word_id=self.word.word_id,
             params={
+                'group_id': self.view.callback.params.get('group_id'),
+                'word_id': self.word.word_id,
                 'game_level': self.game_level.value,
                 'example_id': None,
                 'value_or_translation': bool(randint(0, 1)),
@@ -102,7 +102,7 @@ class LearningGameButtonsBuilder:
         return word_example, data_type
 
     async def get_buttons_to_choose(self, user_words: list[UserWordModel]) -> list[InlineKeyboardButton]:
-        group_id = self.view.callback.group_id
+        group_id = self.view.callback.params.get('group_id')
         chosen_word = await self.word.word()
         buttons = []
 
@@ -110,14 +110,16 @@ class LearningGameButtonsBuilder:
             buttons = [
                 await self.view.buttons.btn(
                     (await word.word()).translation if self.value_or_translation else (await word.word()).value,
-                    UserStateCb(view_name=self.view.view_name, group_id=group_id, word_id=word.word_id),
+                    UserStateCb(view_name=self.view.view_name, params={'group_id': group_id, 'word_id': word.word_id}),
                 )
                 for word in user_words[:4]
             ]
             buttons.append(
                 await self.view.buttons.btn(
                     chosen_word.translation if self.value_or_translation else chosen_word.value,
-                    UserStateCb(view_name=self.view.view_name, group_id=group_id, word_id=chosen_word.id),
+                    UserStateCb(
+                        view_name=self.view.view_name, params={'group_id': group_id, 'word_id': chosen_word.id}
+                    ),
                 )
             )
 
@@ -143,7 +145,7 @@ class LearningGameAnswerProcessor:
 
     @property
     def words(self) -> UserWordModelManager:
-        return UserWordModel.manager().by_user(self.user.id).by_wordgroup(self.view.callback.group_id)
+        return UserWordModel.manager().by_user(self.user.id).by_wordgroup(self.view.callback.params.get('group_id'))
 
     async def run(self):
         if 'chosen_word' in self.user.state.callbacks:
@@ -158,9 +160,11 @@ class LearningGameAnswerProcessor:
             self.view.callbacks.set_callback_answer('✍️ Сейчас нужно ВВЕСТИ ответ в чат')
             return
 
-        words = self.words.by_word([self.view.callback.word_id, self.chosen_word_callback.word_id])
+        words = self.words.by_word(
+            [self.view.callback.params.get('word_id'), self.chosen_word_callback.params.get('word_id')]
+        )
 
-        if self.view.callback.word_id == self.chosen_word_callback.word_id:
+        if self.view.callback.params.get('word_id') == self.chosen_word_callback.params.get('word_id'):
             await self.game_level.add_rating(words)
         else:
             self.view.callbacks.set_callback_answer('🚫 Ответ неверный')
@@ -181,7 +185,7 @@ class LearningGameAnswerProcessor:
 
         example_id = self.chosen_word_callback.params.get('example_id')
         value_or_translation = self.chosen_word_callback.params.get('value_or_translation')
-        words = self.words.by_word(self.chosen_word_callback.word_id)
+        words = self.words.by_word(self.chosen_word_callback.params.get('word_id'))
 
         user_word: UserWordModel = await words.find_one()
         word_example = await user_word.word()
@@ -242,7 +246,12 @@ class LearningGameMessageSender(BaseMessageSender):
     def manager(self) -> Coroutine[None, None, UserWordModel.manager]:
         async def _manager():
             user = await self.view.request.get_user()
-            return UserWordModel.manager().by_user(user.id).by_wordgroup(self.view.callback.group_id).by_chosen(True)
+            return (
+                UserWordModel.manager()
+                .by_user(user.id)
+                .by_wordgroup(self.view.callback.params.get('group_id'))
+                .by_chosen(True)
+            )
 
         return _manager()
 
@@ -271,14 +280,13 @@ class LearningGameMessageSender(BaseMessageSender):
         view_btn_cb = UserStateCb(
             id=self.view.view_name,
             view_name=self.view.view_name,
-            group_id=self.view.callback.group_id,
-            word_id=user_word.word_id,
+            params={'group_id': self.view.callback.params.get('group_id'), 'word_id': user_word.word_id},
         )
         await self.view.buttons.btn(self.view.view_name, view_btn_cb)
         exit_cb = UserStateCb(
             view_name=self.builder.r['LEARN_WORDS_VIEW'].value,
-            group_id=self.view.callback.group_id,
             view_params={'edit_keyboard': False},
+            params={'group_id': self.view.callback.params.get('group_id')},
         )
         return [
             *(await self.builder.get_buttons_to_choose(user_words)),

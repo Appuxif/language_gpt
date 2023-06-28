@@ -1678,6 +1678,25 @@ pymongo = ">=4.3.3,<5.0.0"
 type = "url"
 url = "https://github.com/Appuxif/telebot_models/archive/refs/tags/0.0.5.tar.gz"
 [[package]]
+name = "telebot_views"
+version = "0.0.5"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "0.0.5.tar.gz", hash = "sha256:f600d0dca1692680a65fb38dd6a5a1eb6a432f52ca50524db2ef56d754a72a2b"},
+]
+
+[package.dependencies]
+pydantic = ">=1.10.9,<1.20.0"
+pytelegrambotapi = ">=4.10.0,<5.0.0"
+telebot_models = ">=0.0.2,<1.0.0"
+
+[package.source]
+type = "url"
+url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.5.tar.gz"
+[[package]]
 name = "toml"
 version = "0.10.2"
 description = "Python Library for Tom's Obvious, Minimal Language"
@@ -1967,4 +1986,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "e35f0989e720411e525d27302002aa5c9e2052e91d188514d58f7878d51d3f6f"
+content-hash = "9f9c0c8ae23f7bb48687a1efb1d370003619d25a6dbd83cdf4a4b3aeecb16cf0"

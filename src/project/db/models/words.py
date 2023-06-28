@@ -2,8 +2,9 @@ from typing import Any, Callable, ClassVar, Coroutine, Type
 
 from pydantic import Field, validator
 from telebot_models.models import BaseModelManager, Model, PyObjectId
+from telebot_views.models import UserModelManager
 
-from project.db.models.users import UserModelManager, WithUser
+from project.db.models.users import WithUser
 from project.views.word_learn_views.utils import GameLevel
 
 

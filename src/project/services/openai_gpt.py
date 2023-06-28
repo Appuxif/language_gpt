@@ -4,9 +4,9 @@ from logging import getLogger
 
 import openai
 from openai.openai_object import OpenAIObject
+from telebot_views.models.cache import CacheModel
 
 from project.core.settings import OPENAI
-from project.db.models.cache import CacheModel
 from project.db.models.words import WordExample, WordModel
 from project.utils.timezones import now_utc
 

@@ -1,10 +1,10 @@
 from typing import Any, Coroutine
 
 from telebot.types import InlineKeyboardButton
+from telebot_views.base import BaseMessageSender, BaseView
+from telebot_views.models import UserStateCb
 
 from project.core.bot import bot
-from project.core.views.base import BaseMessageSender, BaseView
-from project.db.models.users import UserStateCb
 from project.db.models.words import UserWordModel, UserWordModelManager
 from project.services.audios import concat_audios
 from project.services.text_to_speech import add_voices_to_word
@@ -17,8 +17,8 @@ class WordMessageSender(BaseMessageSender):
 
     async def get_keyboard(self) -> list[list[InlineKeyboardButton]]:
         r = self.view.route_resolver.routes_registry
-        group_id = self.view.callback.group_id
-        word_id = self.view.callback.word_id
+        group_id = self.view.callback.params.get('group_id')
+        word_id = self.view.callback.params.get('word_id')
         page_num = self.view.callback.page_num
 
         self.user_word: UserWordModel = await (await self.manager).find_one()
@@ -37,9 +37,11 @@ class WordMessageSender(BaseMessageSender):
 
         return [
             [
-                await self.view.buttons.view_btn(r['EDIT_WORD_VIEW'], 1, group_id=group_id, word_id=word_id),
                 await self.view.buttons.view_btn(
-                    r['EDIT_WORD_TRANSLATION_VIEW'], 1, group_id=group_id, word_id=word_id
+                    r['EDIT_WORD_VIEW'], 1, params={'group_id': group_id, 'word_id': word_id}
+                ),
+                await self.view.buttons.view_btn(
+                    r['EDIT_WORD_TRANSLATION_VIEW'], 1, params={'group_id': group_id, 'word_id': word_id}
                 ),
             ],
             [
@@ -48,16 +50,22 @@ class WordMessageSender(BaseMessageSender):
                     UserStateCb(
                         id='listen',
                         view_name=self.view.view_name,
-                        group_id=group_id,
                         page_num=page_num,
-                        word_id=word_id,
+                        params={'group_id': group_id, 'word_id': word_id},
                     ),
                 ),
             ],
             [
-                await self.view.buttons.view_btn(r['DELETE_WORD_VIEW'], 1, group_id=group_id, word_id=word_id),
+                await self.view.buttons.view_btn(
+                    r['DELETE_WORD_VIEW'], 1, params={'group_id': group_id, 'word_id': word_id}
+                ),
                 await self.view.buttons.btn(
-                    'Назад', UserStateCb(view_name=r['USER_GROUP_VIEW'].value, group_id=group_id, page_num=page_num)
+                    'Назад',
+                    UserStateCb(
+                        view_name=r['USER_GROUP_VIEW'].value,
+                        page_num=page_num,
+                        params={'group_id': group_id},
+                    ),
                 ),
             ],
         ]
@@ -74,8 +82,8 @@ class WordMessageSender(BaseMessageSender):
     def manager(self) -> Coroutine[Any, Any, UserWordModelManager]:
         async def inner() -> UserWordModelManager:
             user = await self.view.request.get_user()
-            word_id = self.view.callback.word_id
-            group_id = self.view.callback.group_id
+            word_id = self.view.callback.params.get('word_id')
+            group_id = self.view.callback.params.get('group_id')
             return UserWordModel.manager().by_user(user.id).by_wordgroup(group_id).by_word(word_id)
 
         return inner()

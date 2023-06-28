@@ -1,8 +1,8 @@
 from telebot.types import InlineKeyboardButton
+from telebot_views.base import BaseMessageSender, BaseView
+from telebot_views.models import UserStateCb
 
 from project.core.bot import ParseMode, bot
-from project.core.views.base import BaseMessageSender, BaseView
-from project.db.models.users import UserStateCb
 from project.db.models.words import WordGroupModel
 
 
@@ -17,7 +17,7 @@ class DeleteUserGroupMessageSender(BaseMessageSender):
         if self.view.view_name in user.state.callbacks:
             return []
 
-        callback = cb(view_name=self.view.view_name, group_id=self.view.callback.group_id)
+        callback = cb(view_name=self.view.view_name, params={'group_id': self.view.callback.params.get('group_id')})
         return [
             [await self.view.buttons.btn('Да', callback)],
             [await self.view.buttons.view_btn(r['USER_GROUPS_VIEW'], 1)],
@@ -27,7 +27,7 @@ class DeleteUserGroupMessageSender(BaseMessageSender):
         user = await self.view.request.get_user()
         if self.view.request.callback and self.view.view_name in user.state.callbacks:
             return ''
-        group = await WordGroupModel.manager().find_one(self.view.callback.group_id)
+        group = await WordGroupModel.manager().find_one(self.view.callback.params.get('group_id'))
         return f'Удалить подборку {group.name}?'
 
 
@@ -55,7 +55,7 @@ class DeleteUserGroupView(BaseView):
             await self.buttons.btn(check_cb.id, check_cb)
             return None
 
-        group_id = self.callback.group_id
+        group_id = self.callback.params.get('group_id')
         group = await WordGroupModel.manager().find_one(group_id)
         await group.delete()
         text = f'Подборка *{group.name}* удалена'

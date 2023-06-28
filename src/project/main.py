@@ -1,34 +1,17 @@
 import asyncio
 from logging import getLogger
 
-from telebot.types import CallbackQuery, Message
+import telebot_views
 
 from project.core.bot import bot
 from project.core.logging import configure_logging
-from project.core.views.base import Request, RouteResolver
-from project.core.views.dispatcher import ViewDispatcher
 from project.db.mongodb import get_database
 from project.views.routes import routes
 
 logger = getLogger(__name__)
 
 
-for route in routes:
-    RouteResolver.register_route(route)
-
-
-@bot.message_handler()
-async def message_handler(msg: Message):
-    request = Request(msg=msg)
-    await ViewDispatcher(request=request).dispatch()
-    return
-
-
-@bot.callback_query_handler(func=lambda call: True)
-async def callback_query(callback: CallbackQuery):
-    request = Request(callback=callback)
-    await ViewDispatcher(request=request).dispatch()
-    return
+telebot_views.init(bot, routes)
 
 
 async def run():
