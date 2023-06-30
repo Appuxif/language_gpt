@@ -341,7 +341,7 @@ class LearningGameView(BaseView):
 
     view_name = 'LEARNING_GAME_VIEW'
     labels = [
-        'Учить',
+        '🎓 Учить',
         'К изучению слов',
     ]
     edit_keyboard = False

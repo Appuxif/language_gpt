@@ -17,7 +17,7 @@ class EditWordTranslationMessageSender(BaseMessageSender):
             view_name=r['WORD_VIEW'].value,
             params={'group_id': group_id, 'word_id': word_id},
         )
-        return [[await self.view.buttons.btn('Отмена', callback)]]
+        return [[await self.view.buttons.btn('✖ Отмена', callback)]]
 
     async def get_keyboard_text(self) -> str:
         user = await self.view.request.get_user()
@@ -32,8 +32,8 @@ class EditWordTranslationView(BaseView):
 
     view_name = 'EDIT_WORD_TRANSLATION_VIEW'
     labels = [
-        'Редактировать перевод',
-        'Редактировать перевод',
+        '✏️ Перевод',
+        '✏️ Перевод',
     ]
     delete_income_messages = False
     edit_keyboard = False

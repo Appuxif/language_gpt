@@ -42,7 +42,7 @@ class UserGroupsView(BaseView):
     edit_keyboard = True
     labels = [
         'Мои подборки',
-        'В мои подборки',
+        '💻 В мои подборки',
     ]
 
     message_sender = UserGroupsMessageSender

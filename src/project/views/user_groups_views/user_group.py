@@ -60,7 +60,7 @@ class UserGroupView(BaseView):
     edit_keyboard = True
     labels = [
         'Подборка',
-        'В Подборку',
+        '🚶 В Подборку',
         'Подборки',
     ]
 

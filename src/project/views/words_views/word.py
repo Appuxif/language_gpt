@@ -46,7 +46,7 @@ class WordMessageSender(BaseMessageSender):
             ],
             [
                 await self.view.buttons.btn(
-                    'Прослушать',
+                    '👂 Прослушать',
                     UserStateCb(
                         id='listen',
                         view_name=self.view.view_name,
@@ -60,7 +60,7 @@ class WordMessageSender(BaseMessageSender):
                     r['DELETE_WORD_VIEW'], 1, params={'group_id': group_id, 'word_id': word_id}
                 ),
                 await self.view.buttons.btn(
-                    'Назад',
+                    '🚶 Назад',
                     UserStateCb(
                         view_name=r['USER_GROUP_VIEW'].value,
                         page_num=page_num,

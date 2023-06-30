@@ -52,11 +52,11 @@ class LearnWordsMessageSender(BaseMessageSender):
             *words_btns,
             *(await self.view.paginator.get_pagination(await manager.count(), page_num, params={'group_id': group_id})),
             [
-                await self.view.buttons.btn('Выбрать все', cb(id='select_all', params={'group_id': group_id})),
-                await self.view.buttons.btn('Отменить выбор', cb(id='deselect_all', params={'group_id': group_id})),
+                await self.view.buttons.btn('✅ Выбрать все', cb(id='select_all', params={'group_id': group_id})),
+                await self.view.buttons.btn('❎ Отменить выбор', cb(id='deselect_all', params={'group_id': group_id})),
             ],
             [
-                await self.view.buttons.btn('Прослушать', cb(id='listen', params={'group_id': group_id})),
+                await self.view.buttons.btn('👂 Прослушать', cb(id='listen', params={'group_id': group_id})),
                 await self.view.buttons.view_btn(r['LEARNING_GAME_VIEW'], 0, params={'group_id': group_id}),
             ],
             [
@@ -132,7 +132,7 @@ class LearnWordsView(BaseView):
 
     view_name = 'LEARN_WORDS_VIEW'
     labels = [
-        'Учить слова',
+        '🎓 Учить слова',
         'К изучению слов',
     ]
 

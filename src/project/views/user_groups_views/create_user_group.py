@@ -33,7 +33,7 @@ class CreateUserGroupView(BaseView):
     delete_income_messages = False
     labels = [
         'Создать подборку?',
-        'Создать подборку',
+        '📝 Создать подборку',
     ]
 
     message_sender = CreateUserGroupMessageSender

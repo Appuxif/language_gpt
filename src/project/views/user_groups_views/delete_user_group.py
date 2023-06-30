@@ -38,7 +38,7 @@ class DeleteUserGroupView(BaseView):
     edit_keyboard = True
     labels = [
         'Удалить подборку?',
-        'Удалить подборку',
+        '♻ Удалить подборку',
     ]
 
     message_sender = DeleteUserGroupMessageSender

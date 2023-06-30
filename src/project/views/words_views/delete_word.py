@@ -31,7 +31,7 @@ class DeleteWordMessageSender(BaseMessageSender):
             ],
             [
                 await self.view.buttons.btn(
-                    'Отмена',
+                    '✖ Отмена',
                     cb(
                         view_name=r['WORD_VIEW'].value,
                         params={'group_id': group_id, 'word_id': word_id},
@@ -54,7 +54,7 @@ class DeleteWordView(BaseView):
     view_name = 'DELETE_WORD_VIEW'
     labels = [
         'Удалить слово?',
-        'Удалить слово',
+        '♻ Удалить слово',
     ]
 
     message_sender = DeleteWordMessageSender
