@@ -69,8 +69,9 @@ openai = "0.27.4"
 ipython = "8.7.0"
 google-cloud-texttospeech = "^2.14.1"
 pydub = "0.25.1"
-telebot_models = {url = "https://github.com/Appuxif/telebot_models/archive/refs/tags/0.0.5.tar.gz"}
-telebot_views = {url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.5.tar.gz"}
+telebot_models = {url = "https://github.com/Appuxif/telebot_models/archive/refs/tags/0.0.6.tar.gz"}
+telebot_views = {url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.8b1.tar.gz"}
+asyncio_functools = {url = "https://github.com/Appuxif/asyncio_functools/archive/refs/tags/0.0.2.tar.gz"}
 
 [tool.pytest.ini_options]
 markers = [

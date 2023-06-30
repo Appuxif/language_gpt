@@ -16,6 +16,7 @@ class TELEGRAM:
     """Telegram Settings"""
 
     BOT_TOKEN: str = str(os.environ.get('TELEGRAM_BOT_TOKEN', ''))
+    MAIN_CHANNEL: int = int(os.environ.get('TELEGRAM_BOT_MAIN_CHANNEL') or 0)
 
 
 class MONGODB:
