@@ -42,21 +42,6 @@ config = {
             'handlers': ['console', 'telegram-reports'],
             'propagate': True,
         },
-        'uvicorn': {
-            'level': 'INFO',
-            'handlers': ['console'],
-            'propagate': True,
-        },
-        'celery': {
-            'level': 'INFO',
-            'handlers': ['console'],
-            'propagate': False,
-        },
-        'flower': {
-            'level': 'INFO',
-            'handlers': ['console'],
-            'propagate': False,
-        },
     },
 }
 
