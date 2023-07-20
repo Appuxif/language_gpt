@@ -53,8 +53,8 @@ class GameLevel(int, Enum):
     def get_weights(cls, rating: float) -> list[float]:
         weights: list[float] = [0.0] * len(GameLevel)
         if rating < 2.0:
-            weights[GameLevel.LEVEL_1.index] = 0.66
-            weights[GameLevel.LEVEL_4.index] = 0.34
+            weights[GameLevel.LEVEL_1.index] = 0.5
+            weights[GameLevel.LEVEL_4.index] = 0.5
         elif 2.0 <= rating <= 4.0:
             weights[GameLevel.LEVEL_2.index] = 0.66
             weights[GameLevel.LEVEL_4.index] = 0.34
@@ -62,14 +62,15 @@ class GameLevel(int, Enum):
             weights[GameLevel.LEVEL_3.index] = 0.66
             weights[GameLevel.LEVEL_4.index] = 0.34
         elif 6.0 <= rating <= 9.0:
-            weights[GameLevel.LEVEL_3.index] = 0.34
-            weights[GameLevel.LEVEL_4.index] = 0.66
+            weights[GameLevel.LEVEL_3.index] = 0.5
+            weights[GameLevel.LEVEL_4.index] = 0.5
         elif 9.0 <= rating <= 12.0:
-            weights[GameLevel.LEVEL_5.index] = 1
+            weights[GameLevel.LEVEL_5.index] = 0.5
+            weights[GameLevel.LEVEL_3.index] = 0.5
         elif 12.0 <= rating:
-            weights[GameLevel.LEVEL_6.index] = 0.40
-            weights[GameLevel.LEVEL_5.index] = 0.40
-            weights[GameLevel.LEVEL_3.index] = 0.20
+            weights[GameLevel.LEVEL_6.index] = 0.35
+            weights[GameLevel.LEVEL_5.index] = 0.35
+            weights[GameLevel.LEVEL_3.index] = 0.30
         return weights
 
     @classmethod
@@ -78,10 +79,12 @@ class GameLevel(int, Enum):
         return choices(list(cls), weights, k=1)[0]
 
     async def add_rating(self, words: 'UserWordModelManager') -> None:
-        await words.update_many([{'$set': {'rating': {'$min': [MAX_RATING, {'$add': ['$rating', 1]}]}}}])
+        if self in [GameLevel.LEVEL_1, GameLevel.LEVEL_2, GameLevel.LEVEL_3]:
+            await words.update_many([{'$set': {'rating': {'$min': [MAX_RATING, {'$add': ['$rating', 1]}]}}}])
 
     async def sub_rating(self, words: 'UserWordModelManager') -> None:
-        await words.update_many([{'$set': {'rating': {'$max': [0, {'$add': ['$rating', -2]}]}}}])
+        if self in [GameLevel.LEVEL_1, GameLevel.LEVEL_2, GameLevel.LEVEL_3]:
+            await words.update_many([{'$set': {'rating': {'$max': [0, {'$add': ['$rating', -2]}]}}}])
 
     @staticmethod
     def compute_percent(rating: float) -> int:
