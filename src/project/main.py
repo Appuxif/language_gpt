@@ -11,13 +11,13 @@ from project.views.routes import routes
 logger = getLogger(__name__)
 
 
-telebot_views.init(bot, routes)
+telebot_views.init(bot, routes, skip_non_private=True)
 
 
 async def run():
     await get_database().list_collection_names()
     await bot.delete_webhook()
-    await bot.polling(non_stop=True)
+    await bot.polling(non_stop=True, skip_pending=True)
 
 
 def run_loop():
