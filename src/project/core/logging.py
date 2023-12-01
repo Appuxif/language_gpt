@@ -1,6 +1,6 @@
 import asyncio
 from functools import partial
-from logging import Handler, LogRecord
+from logging import Handler, LogRecord, getLogger
 from logging.config import dictConfig
 
 from project.core import settings
@@ -38,8 +38,8 @@ config = {
             'propagate': False,
         },
         'TeleBot': {
-            'level': 'DEBUG',
-            'handlers': ['console', 'telegram-reports'],
+            'level': 'INFO',
+            'handlers': ['console'],
             'propagate': True,
         },
     },
@@ -68,8 +68,12 @@ class TelegramReportsHandler(Handler):
             loop.run_until_complete(coro)
 
     async def async_emit(self, record: LogRecord) -> None:
+        logger = getLogger(__name__)
         if record.exc_info and len(record.exc_info) >= 2:
             record.exc_text = f'{record.exc_info[0].__name__}: {record.exc_info[1]}'
         record.exc_info = None
         msg = self.format(record)
-        await reports_bot.send_message(settings.GENERAL.REPORTS_TELEGRAM_CHAT_ID, msg[:3000])
+        try:
+            await reports_bot.send_message(settings.GENERAL.REPORTS_TELEGRAM_CHAT_ID, msg[:3000])
+        except Exception:  # pylint: disable=broad-except
+            logger.warning('Log error')
