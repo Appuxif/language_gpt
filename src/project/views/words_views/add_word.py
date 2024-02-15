@@ -43,13 +43,11 @@ class AddWordView(BaseView):
         r = self.route_resolver.routes_registry
 
         if self.view_name not in user.state.callbacks:
-            group_id = self.callback.params.get('group_id')
-            word_id = self.callback.params.get('word_id')
             check_cb = UserStateCb(
                 id=self.view_name,
                 view_name=self.view_name,
                 page_num=1,
-                params={'group_id': group_id, 'word_id': word_id},
+                params=self.callback.params,
             )
             await self.buttons.btn(check_cb.id, check_cb)
             return None

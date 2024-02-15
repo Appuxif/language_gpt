@@ -14,7 +14,7 @@ from project.core.bot import bot
 from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordExample
 from project.services.openai_gpt import add_examples_to_word, whether_translation_is_correct
 from project.services.text_to_speech import add_voices_to_word, add_voices_to_word_example
-from project.views.word_learn_views.utils import GameLevel
+from project.views.word_learn_views.utils import MIN_WORDS_TO_START_GAME, GameLevel
 
 logger = getLogger(__name__)
 
@@ -267,7 +267,7 @@ class LearningGameMessageSender(BaseMessageSender):
             sort=[('rating', 1)], limit=10, prefetch_words=True
         )
 
-        if len(user_words) < 5:
+        if len(user_words) < MIN_WORDS_TO_START_GAME:
             self.view.callbacks.set_callback_answer('Нужно выбрать хотя бы пять слов')
             return []
 

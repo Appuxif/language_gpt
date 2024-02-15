@@ -66,6 +66,6 @@ class AddWordTranslationView(BaseView):
         await bot.send_message(self.request.msg.chat.id, f'Введено слово: "{word.label}"')
         callback = UserStateCb(
             view_name=r['USER_GROUP_VIEW'].value,
-            params={'group_id': check_cb.params.get('group_id')},
+            params=check_cb.params,
         )
         return r['USER_GROUP_VIEW'].view(self.request, callback=callback, edit_keyboard=False)

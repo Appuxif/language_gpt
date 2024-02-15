@@ -13,6 +13,7 @@ class WordGroupModel(Model):
 
     name: str = ''
     is_public: bool = False
+    stars: int = 0  # TODO: implement starring public groups
 
     manager: ClassVar[Type['WordGroupModelManager']]
 
@@ -102,7 +103,10 @@ class UserWordGroupModel(WithUserGroup, Model):
         rating = 0
         if aggregation:
             rating = GameLevel.compute_percent(aggregation[0]['rating'] / aggregation[0]['count'])
-        return f'{group.name} [{rating}%]'
+        result = f'{group.name} [{rating}%]'
+        if group.is_public:
+            result += ' [PUB]'
+        return result
 
     wordgroup: ClassVar[Callable[[], Coroutine[Any, Any, WordGroupModel]]]
 
@@ -120,6 +124,7 @@ class UserWordGroupModelManager(BaseModelManager[UserWordGroupModel]):
 @UserModelManager.relation_map('user_id', 'id')
 @WordGroupModelManager.relation_map('group_id', 'id')
 @WordModelManager.relation_map('word_id', 'id')
+@UserWordGroupModelManager.relation_map('group_id', 'group_id')
 class UserWordModel(WithUserGroup, Model):
     """User Word Model"""
 

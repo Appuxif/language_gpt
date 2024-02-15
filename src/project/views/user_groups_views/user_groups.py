@@ -12,7 +12,8 @@ class UserGroupsMessageSender(BaseMessageSender):
         cb = UserStateCb
         r = self.view.route_resolver.routes_registry
         user = await self.view.request.get_user()
-        page_num = self.view.callback.page_num or 1
+        page_num = self.view.callback.page_num or user.constants.get('USER_GROUPS_VIEW_PAGE_NUM') or 1
+        user.constants['USER_GROUPS_VIEW_PAGE_NUM'] = page_num
 
         manager = UserWordGroupModel.manager().by_user(user.id)
         groups_count = await manager.count()

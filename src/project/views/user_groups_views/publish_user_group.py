@@ -3,11 +3,11 @@ from telebot_views.base import BaseMessageSender, BaseView
 from telebot_views.models import UserStateCb
 
 from project.core.bot import ParseMode, bot
-from project.db.models.words import UserWordGroupModel, WordGroupModel
+from project.db.models.words import WordGroupModel
 
 
-class DeleteUserGroupMessageSender(BaseMessageSender):
-    """Delete User Group Message Sender"""
+class PublishUserGroupMessageSender(BaseMessageSender):
+    """Publish User Group Message Sender"""
 
     async def get_keyboard(self) -> list[list[InlineKeyboardButton]]:
         cb = UserStateCb
@@ -32,20 +32,25 @@ class DeleteUserGroupMessageSender(BaseMessageSender):
         if self.view.request.callback and self.view.view_name in user.state.callbacks:
             return ''
         group = await WordGroupModel.manager().find_one(self.view.callback.params.get('group_id'))
-        return f'Удалить подборку {group.name}?'
+        return (
+            f'Опубликовать подборку {group.name}?'
+            f'\n\nЭто действие нельзя отменить. '
+            f'В опубликованных подборках нельзя добавлять или удалять слова. '
+            f'Можно будет только учить существующие слова, прослушивать и смотреть примеры.'
+        )
 
 
-class DeleteUserGroupView(BaseView):
-    """Отображение удаления подборки пользователя"""
+class PublishUserGroupView(BaseView):
+    """Отображение публикации подборки пользователя"""
 
-    view_name = 'DELETE_USER_GROUP_VIEW'
+    view_name = 'PUBLISH_USER_GROUP_VIEW'
     edit_keyboard = True
     labels = [
-        'Удалить подборку?',
-        '♻ Удалить подборку',
+        'Опубликовать подборку?',
+        '🌎 Опубликовать подборку',
     ]
 
-    message_sender = DeleteUserGroupMessageSender
+    message_sender = PublishUserGroupMessageSender
 
     async def redirect(self) -> BaseView | None:
 
@@ -61,22 +66,17 @@ class DeleteUserGroupView(BaseView):
 
         group_id = self.callback.params.get('group_id')
         group = await WordGroupModel.manager().find_one(group_id)
-        if group.is_public:
-            user_group = (
-                await UserWordGroupModel.manager()
-                .by_user(user.id)
-                .by_wordgroup(group_id)
-                .find_one(raise_exception=False)
-            )
-            if user_group:
-                await user_group.delete()
-        else:
-            await group.delete()
-        text = f'Подборка *{group.name}* удалена'
+        group.is_public = True
+        await group.update()
+        text = f'Подборка *{group.name}* опубликована'
         await bot.send_message(self.request.callback.message.chat.id, text, parse_mode=ParseMode.MARKDOWN.value)
 
-        return r['USER_GROUPS_VIEW'].view(
+        return r['USER_GROUP_VIEW'].view(
             self.request,
-            callback=UserStateCb(view_name=r['USER_GROUPS_VIEW'].value),
+            callback=UserStateCb(
+                view_name=r['USER_GROUP_VIEW'].value,
+                params=self.callback.params,
+                page_num=self.callback.page_num,
+            ),
             edit_keyboard=False,
         )

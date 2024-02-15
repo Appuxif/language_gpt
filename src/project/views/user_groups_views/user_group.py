@@ -1,8 +1,11 @@
+import asyncio
+
 from telebot.types import InlineKeyboardButton
 from telebot_views.base import BaseMessageSender, BaseView
 from telebot_views.models import UserStateCb
 
-from project.db.models.words import UserWordGroupModel, UserWordModel
+from project.db.models.words import UserWordGroupModel, UserWordModel, WordGroupModel
+from project.views.word_learn_views.utils import MIN_WORDS_TO_START_GAME
 
 
 class UserGroupMessageSender(BaseMessageSender):
@@ -16,33 +19,53 @@ class UserGroupMessageSender(BaseMessageSender):
         page_num = self.view.callback.page_num or 1
 
         manager = UserWordModel.manager().by_user(user.id).by_wordgroup(group_id)
-        user_words: list[UserWordModel] = await self.view.paginator.paginate(manager, page_num, prefetch_words=True)
+        group, word_count, user_words = await asyncio.gather(
+            WordGroupModel.manager().find_one(group_id),
+            manager.count(),
+            self.view.paginator.paginate(manager, page_num, prefetch_words=True),
+        )  # type: WordGroupModel, int, list[UserWordModel]
 
         # Вывод слов на клавиатуре, если слова вообще есть
-        words_btns = []
-        for user_word in user_words:
+        async def prepare_word(user_word: UserWordModel) -> list[InlineKeyboardButton]:
             callback = cb(
                 view_name=r['WORD_VIEW'].value,
                 params={'group_id': group_id, 'word_id': user_word.word_id},
                 page_num=page_num,
             )
-            btn = [await self.view.buttons.btn(await user_word.get_label(), callback)]
-            words_btns.append(btn)
+            return [await self.view.buttons.btn(await user_word.get_label(), callback)]
 
-        additional_btns = [[await self.view.buttons.view_btn(r['ADD_WORD_VIEW'], 0, params={'group_id': group_id})]]
-        if bool(user_words):
-            additional_btns[0].append(
-                await self.view.buttons.view_btn(r['LEARN_WORDS_VIEW'], 0, params={'group_id': group_id})
+        additional_btns = []
+        private_btns = [
+            [
+                await self.view.buttons.view_btn(
+                    r['DELETE_USER_GROUP_VIEW'], 1, params={'group_id': group_id}, page_num=page_num
+                )
+            ],
+        ]
+        if not group.is_public:
+            additional_btns += [
+                [await self.view.buttons.view_btn(r['ADD_WORD_VIEW'], 0, params={'group_id': group_id})]
+            ]
+            if word_count >= MIN_WORDS_TO_START_GAME:
+                private_btns.append(
+                    [await self.view.buttons.view_btn(r['PUBLISH_USER_GROUP_VIEW'], 1, params={'group_id': group_id})]
+                )
+
+        if word_count >= MIN_WORDS_TO_START_GAME:
+            additional_btn = await self.view.buttons.view_btn(
+                r['LEARN_WORDS_VIEW'], 0, params={'group_id': group_id}, page_num=page_num
             )
+            if additional_btns:
+                additional_btns[0].append(additional_btn)
+            else:
+                additional_btns.append([additional_btn])
 
         return [
-            *words_btns,
-            *(await self.view.paginator.get_pagination(await manager.count(), page_num, params={'group_id': group_id})),
+            *(await asyncio.gather(*map(prepare_word, user_words))),
+            *(await self.view.paginator.get_pagination(word_count, page_num, params={'group_id': group_id})),
             *additional_btns,
-            [
-                await self.view.buttons.view_btn(r['DELETE_USER_GROUP_VIEW'], 1, params={'group_id': group_id}),
-                await self.view.buttons.view_btn(r['USER_GROUPS_VIEW'], 1),
-            ],
+            *private_btns,
+            [await self.view.buttons.view_btn(r['USER_GROUPS_VIEW'], 1)],
         ]
 
     async def get_keyboard_text(self) -> str:
@@ -50,7 +73,13 @@ class UserGroupMessageSender(BaseMessageSender):
         user = await self.view.request.get_user()
         groups = UserWordGroupModel.manager().by_wordgroup(group_id).by_user(user.id)
         group: UserWordGroupModel = await groups.find_one()
-        return f'{self.view.labels[0]} {await group.get_label()}'
+
+        words_total = await UserWordModel.manager().by_user(user.id).by_wordgroup(group_id).count()
+
+        text = f'{self.view.labels[0]} {await group.get_label()}'
+        if words_total:
+            text += f'\nСлов: {words_total}'
+        return text
 
 
 class UserGroupView(BaseView):

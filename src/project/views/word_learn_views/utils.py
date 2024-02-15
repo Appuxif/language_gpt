@@ -7,6 +7,8 @@ if TYPE_CHECKING:
 
 
 MAX_RATING = 15.0
+MIN_WORDS_TO_START_GAME = 5
+MAX_WORDS_FOR_AUDIO = 10
 
 
 class GameLevel(int, Enum):

@@ -10,6 +10,7 @@ from project.core.bot import bot
 from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordModel
 from project.services.audios import concat_audios
 from project.services.text_to_speech import add_voices_to_word
+from project.views.word_learn_views.utils import MAX_WORDS_FOR_AUDIO, MIN_WORDS_TO_START_GAME
 
 
 class LearnWordsMessageSender(BaseMessageSender):
@@ -37,7 +38,10 @@ class LearnWordsMessageSender(BaseMessageSender):
                 [{'$set': {'is_chosen': {'$not': '$is_chosen'}}}]
             )
 
-        user_words: list[UserWordModel] = await self.view.paginator.paginate(manager, page_num, prefetch_words=True)
+        words_count, user_words = await asyncio.gather(
+            manager.count(),
+            self.view.paginator.paginate(manager, page_num, prefetch_words=True),
+        )  # type: int, list[UserWordModel]
 
         # Вывод слов на клавиатуре, если слова вообще есть
         words_btns = []
@@ -48,19 +52,24 @@ class LearnWordsMessageSender(BaseMessageSender):
                 [await self.view.buttons.btn(text, cb(params={'group_id': group_id, 'word_id': user_word.word_id}))]
             )
 
+        actions = [[await self.view.buttons.btn('👂 Прослушать', cb(id='listen', params={'group_id': group_id}))]]
+        if words_count >= MIN_WORDS_TO_START_GAME:
+            actions.append(
+                [await self.view.buttons.view_btn(r['LEARNING_GAME_VIEW'], 0, params={'group_id': group_id})]
+            )
+
         return [
             *words_btns,
-            *(await self.view.paginator.get_pagination(await manager.count(), page_num, params={'group_id': group_id})),
+            *(await self.view.paginator.get_pagination(words_count, page_num, params={'group_id': group_id})),
             [
                 await self.view.buttons.btn('✅ Выбрать все', cb(id='select_all', params={'group_id': group_id})),
                 await self.view.buttons.btn('❎ Отменить выбор', cb(id='deselect_all', params={'group_id': group_id})),
             ],
+            *actions,
             [
-                await self.view.buttons.btn('👂 Прослушать', cb(id='listen', params={'group_id': group_id})),
-                await self.view.buttons.view_btn(r['LEARNING_GAME_VIEW'], 0, params={'group_id': group_id}),
-            ],
-            [
-                await self.view.buttons.view_btn(r['USER_GROUP_VIEW'], 1, params={'group_id': group_id}),
+                await self.view.buttons.view_btn(
+                    r['USER_GROUP_VIEW'], 1, params={'group_id': group_id}, page_num=page_num
+                ),
             ],
         ]
 
@@ -71,8 +80,10 @@ class LearnWordsMessageSender(BaseMessageSender):
             self.view.callbacks.set_callback_answer('Нужно выбрать хотя бы одно слово.')
             return
 
-        if len(user_words_ids) > 10:
-            self.view.callbacks.set_callback_answer('Выбрано слишком много слов. Можно максимум 10 слов за раз.')
+        if len(user_words_ids) > MAX_WORDS_FOR_AUDIO:
+            self.view.callbacks.set_callback_answer(
+                f'Выбрано слишком много слов. Можно максимум {MAX_WORDS_FOR_AUDIO} слов за раз.'
+            )
             return
 
         await bot.send_chat_action(self.view.request.message.chat.id, 'upload_audio', timeout=120)

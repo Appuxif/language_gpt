@@ -64,5 +64,6 @@ class CreateUserGroupView(BaseView):
         text = f'Подборка *{self.request.msg.text}* создана успешно'
         await bot.send_message(self.request.msg.chat.id, text, parse_mode=ParseMode.MARKDOWN.value)
 
-        self.callback.view_name = r['USER_GROUPS_VIEW'].value
-        return r['USER_GROUPS_VIEW'].view(self.request, callback=self.callback, edit_keyboard=False)
+        self.callback.view_name = r['USER_GROUP_VIEW'].value
+        self.callback.params['group_id'] = group.id
+        return r['USER_GROUP_VIEW'].view(self.request, callback=self.callback, edit_keyboard=False)

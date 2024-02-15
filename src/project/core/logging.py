@@ -26,6 +26,11 @@ config = {
             'level': 'ERROR',
         },
     },
+    '': {
+        'level': 'INFO',
+        'handlers': ['console'],
+        'propagate': False,
+    },
     'loggers': {
         '__main__': {
             'level': 'DEBUG',
@@ -36,6 +41,11 @@ config = {
             'level': 'DEBUG',
             'handlers': ['console', 'telegram-reports'],
             'propagate': False,
+        },
+        'telebot_views': {
+            'level': 'INFO',
+            'handlers': ['console', 'telegram-reports'],
+            'propagate': True,
         },
         'TeleBot': {
             'level': 'INFO',
