@@ -258,13 +258,14 @@ class LearningGameMessageSender(BaseMessageSender):
     async def get_keyboard(self) -> list[list[InlineKeyboardButton]]:
 
         user = await self.view.request.get_user()
-        await LearningGameAnswerProcessor(self.view, user).run()
+        if self.view.callback.id != 'skip_word':
+            await LearningGameAnswerProcessor(self.view, user).run()
 
-        if self.view.callbacks.callback_answer:
-            return []
+            if self.view.callbacks.callback_answer:
+                return []
 
         user_words: list[UserWordModel] = await (await self.manager).find_all(
-            sort=[('rating', 1)], limit=10, prefetch_words=True
+            sort=[('rating', 1)], limit=5, prefetch_words=True
         )
 
         if len(user_words) < MIN_WORDS_TO_START_GAME:
@@ -288,8 +289,14 @@ class LearningGameMessageSender(BaseMessageSender):
             view_params={'edit_keyboard': False},
             params={'group_id': self.view.callback.params.get('group_id')},
         )
+        skip_cb = UserStateCb(
+            id='skip_word',
+            view_name=self.view.view_name,
+            params={'group_id': self.view.callback.params.get('group_id')},
+        )
         return [
             *(await self.builder.get_buttons_to_choose(user_words)),
+            [await self.view.buttons.btn('» Пропустить', skip_cb)],
             [await self.view.buttons.btn('🤚 Завершить', exit_cb)],
         ]
 
