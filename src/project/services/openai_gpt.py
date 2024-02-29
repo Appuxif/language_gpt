@@ -24,7 +24,7 @@ async def add_examples_to_word(word: WordModel, save: bool = True) -> None:
     prompt = EXAMPLES_TO_WORD_PROMPT.format(label=word.label)
     result = await openai.Completion.acreate(
         prompt=prompt,
-        model="text-davinci-003",
+        model="gpt-3.5-turbo-instruct",
         max_tokens=2048 - len(prompt),
         temperature=0.5,
     )
@@ -73,7 +73,9 @@ async def whether_translation_is_correct(word: WordModel, word_example: WordExam
         sentence1=sentence,
         sentence2=word_example,
     )
-    result = await openai.Completion.acreate(prompt=prompt, model="text-davinci-003", max_tokens=1024, temperature=0)
+    result = await openai.Completion.acreate(
+        prompt=prompt, model="gpt-3.5-turbo-instruct", max_tokens=1024, temperature=0
+    )
     log_debug_prompt_result(prompt, result)
 
     result_string = result['choices'][0]['text'].strip()
