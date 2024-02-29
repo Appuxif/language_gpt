@@ -58,6 +58,7 @@ class LearningGameButtonsBuilder:
 
     async def define_game_level(self):
         self.game_level = GameLevel.choose_game_level(self.word.rating)
+
         chosen_word = await self.word.word()
 
         if self.game_level in (GameLevel.LEVEL_5, GameLevel.LEVEL_6):
@@ -293,9 +294,8 @@ class LearningGameMessageSender(BaseMessageSender):
             if self.view.callbacks.callback_answer:
                 return []
 
-        user_words: list[UserWordModel] = await (await self.manager).find_all(
-            sort=[('rating', 1)], limit=5, prefetch_words=True
-        )
+        manager = await self.manager
+        user_words: list[UserWordModel] = await manager.find_all(sort=[('rating', 1)], limit=10, prefetch_words=True)
 
         if len(user_words) < MIN_WORDS_TO_START_GAME:
             self.view.callbacks.set_callback_answer('Нужно выбрать хотя бы пять слов')
@@ -303,6 +303,11 @@ class LearningGameMessageSender(BaseMessageSender):
 
         shuffle(user_words)
         user_word = user_words.pop()
+        if str(user_word.id) == user.constants.get('LEARNING_LAST_USER_WORD_ID'):
+            next_user_word = user_words.pop()
+            user_words.append(user_word)
+            user_word = next_user_word
+        user.constants['LEARNING_LAST_USER_WORD_ID'] = str(user_word.id)
 
         self.builder = LearningGameButtonsBuilder(self.view, user_word)
         await self.builder.define_game_level()
