@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Coroutine
 
 from telebot.types import InlineKeyboardButton
@@ -8,6 +9,7 @@ from project.core.bot import bot
 from project.core.settings import GENERAL
 from project.db.models.words import UserWordModel, UserWordModelManager
 from project.services.audios import concat_audios
+from project.services.openai_gpt import add_examples_to_word
 from project.services.text_to_speech import add_voices_to_word
 
 
@@ -22,18 +24,28 @@ class WordMessageSender(BaseMessageSender):
         page_num = self.view.callback.page_num
 
         self.user_word: UserWordModel = await (await self.manager).find_one()
-        group = await self.user_word.wordgroup()
+        word, group = await asyncio.gather(
+            self.user_word.word(),
+            self.user_word.wordgroup(),
+        )
 
         if self.view.callback.id == 'listen':
-            await bot.send_chat_action(self.view.request.message.chat.id, 'upload_audio', timeout=120)
-            word = await self.user_word.word()
-            await add_voices_to_word(word, save=True)
+            await asyncio.gather(
+                bot.send_chat_action(self.view.request.message.chat.id, 'upload_audio', timeout=120),
+                add_voices_to_word(word, save=True),
+            )
             await bot.send_audio(
                 self.view.request.message.chat.id,
                 concat_audios(word.value_voice, word.translation_voice),
                 performer=f'{GENERAL.SECOND_LANG.value.title()} Learning Bot',
                 title=word.value,
                 caption=word.label,
+            )
+
+        if self.view.callback.id == 'load_examples':
+            await asyncio.gather(
+                bot.send_chat_action(self.view.request.message.chat.id, 'typing', timeout=120),
+                add_examples_to_word(word, save=True),
             )
 
         edit_btns = []
@@ -49,6 +61,21 @@ class WordMessageSender(BaseMessageSender):
             )
             delete_btns.append(
                 await self.view.buttons.view_btn(r['DELETE_WORD_VIEW'], 1, params=self.view.callback.params)
+            )
+
+        if not word.examples:
+            edit_btns.append(
+                [
+                    await self.view.buttons.btn(
+                        '🔍 Загрузить примеры',
+                        UserStateCb(
+                            id='load_examples',
+                            view_name=self.view.view_name,
+                            page_num=page_num,
+                            params=self.view.callback.params,
+                        ),
+                    )
+                ]
             )
 
         return [
