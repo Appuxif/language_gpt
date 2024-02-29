@@ -7,6 +7,7 @@ from telebot_views.base import BaseMessageSender, BaseView
 from telebot_views.models import UserStateCb
 
 from project.core.bot import bot
+from project.core.settings import GENERAL
 from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordModel
 from project.services.audios import concat_audios
 from project.services.text_to_speech import add_voices_to_word
@@ -104,7 +105,7 @@ class LearnWordsMessageSender(BaseMessageSender):
         await bot.send_audio(
             self.view.request.message.chat.id,
             result_audio,
-            performer='English Learning Bot',
+            performer=f'{GENERAL.SECOND_LANG.value.title()} Learning Bot',
             title=group.name,
             caption=caption,
         )

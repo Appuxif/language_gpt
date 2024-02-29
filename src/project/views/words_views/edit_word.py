@@ -3,6 +3,7 @@ from telebot_views.base import BaseMessageSender, BaseView
 from telebot_views.models import UserStateCb
 
 from project.core.bot import bot
+from project.core.settings import GENERAL
 from project.db.models.words import WordModel
 
 
@@ -25,7 +26,7 @@ class EditWordMessageSender(BaseMessageSender):
         if self.view.view_name in user.state.callbacks:
             return ''
 
-        return 'Введи слово (English):'
+        return f'Введи слово ({GENERAL.SECOND_LANG.value.title()}):'
 
 
 class EditWordView(BaseView):
@@ -66,7 +67,9 @@ class EditWordView(BaseView):
 
         check_cb.params['word_id'] = word.id
 
-        await bot.send_message(self.request.msg.chat.id, f'Введено слово: "{word.label}"')
+        msg = await bot.send_message(self.request.msg.chat.id, f'Введено слово: "{word.label}"')
+        self.user_states.add_message_to_delete(msg.chat.id, msg.message_id)
+        self.user_states.add_message_to_delete(self.request.msg.chat.id, self.request.msg.message_id)
         callback = UserStateCb(
             view_name=r['WORD_VIEW'].value,
             params={'group_id': check_cb.params.get('group_id'), 'word_id': check_cb.params.get('word_id')},

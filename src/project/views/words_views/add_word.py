@@ -2,6 +2,7 @@ from telebot.types import InlineKeyboardButton
 from telebot_views.base import BaseMessageSender, BaseView
 from telebot_views.models import UserStateCb
 
+from project.core.settings import GENERAL
 from project.db.models.words import UserWordModel, WordModel
 
 
@@ -22,7 +23,7 @@ class AddWordMessageSender(BaseMessageSender):
         if self.view.view_name in user.state.callbacks:
             return ''
 
-        return 'Введи слово (English):'
+        return f'Введи слово ({GENERAL.SECOND_LANG.value.title()}):'
 
 
 class AddWordView(BaseView):
@@ -57,6 +58,8 @@ class AddWordView(BaseView):
         await word.insert()
         user_word = UserWordModel(user_id=user.id, word_id=word.id, group_id=check_cb.params.get('group_id'))
         await user_word.insert()
+
+        self.user_states.add_message_to_delete(self.request.msg.chat.id, self.request.msg.message_id, only_next=False)
 
         check_cb.params['word_id'] = word.id
         check_cb.view_name = r['ADD_WORD_TRANSLATION_VIEW'].value

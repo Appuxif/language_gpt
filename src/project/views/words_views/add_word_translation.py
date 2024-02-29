@@ -22,7 +22,7 @@ class AddWordTranslationMessageSender(BaseMessageSender):
         if self.view.view_name in user.state.callbacks:
             return ''
 
-        return 'Введи перевод:'
+        return f'Слово {self.view.request.message.text}\n\nВведи перевод:'
 
 
 class AddWordTranslationView(BaseView):
@@ -64,6 +64,7 @@ class AddWordTranslationView(BaseView):
         await word.update()
 
         await bot.send_message(self.request.msg.chat.id, f'Введено слово: "{word.label}"')
+
         callback = UserStateCb(
             view_name=r['USER_GROUP_VIEW'].value,
             params=check_cb.params,

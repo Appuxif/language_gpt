@@ -26,11 +26,11 @@ config = {
             'level': 'ERROR',
         },
     },
-    '': {
-        'level': 'INFO',
-        'handlers': ['console'],
-        'propagate': False,
-    },
+    # '': {
+    #     'level': 'INFO',
+    #     'handlers': ['console'],
+    #     'propagate': False,
+    # },
     'loggers': {
         '__main__': {
             'level': 'DEBUG',

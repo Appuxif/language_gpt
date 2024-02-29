@@ -11,6 +11,7 @@ from telebot_views.base import BaseMessageSender, BaseView, Route, UserStatesMan
 from telebot_views.models import UserModel, UserStateCb
 
 from project.core.bot import bot
+from project.core.settings import GENERAL
 from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordExample, WordModel
 from project.services.openai_gpt import add_examples_to_word, whether_translation_is_correct
 from project.services.text_to_speech import add_voices_to_word, add_voices_to_word_example
@@ -184,8 +185,15 @@ class LearningGameAnswerProcessor:
             self.view.user_states.add_message_to_delete(self.view.request.msg.chat.id, msg.message_id)
             return
 
+        self.view.user_states.add_message_to_delete(
+            self.view.request.msg.chat.id,
+            self.view.request.msg.message_id,
+            only_next=False,
+        )
+
         example_id = self.chosen_word_callback.params.get('example_id')
         words = self.words.by_word(self.chosen_word_callback.params.get('word_id'))
+        value_or_translation = self.chosen_word_callback.params.get('value_or_translation')
         user_word, word_example, word_to_translate = await self._get_word_to_translate()
 
         answer_text = self.view.request.msg.text
@@ -193,10 +201,14 @@ class LearningGameAnswerProcessor:
         decision = first_decision
         if self.game_level in (GameLevel.LEVEL_5,) and example_id and decision is False:
             try:
-                decision, answer_text = await whether_translation_is_correct(
-                    await user_word.word(),
-                    word_example,
-                    answer_text,
+                _, (decision, answer_text) = await asyncio.gather(
+                    bot.send_chat_action(self.view.request.message.chat.id, 'typing', timeout=120),
+                    whether_translation_is_correct(
+                        await user_word.word(),
+                        word_example,
+                        answer_text,
+                        value_or_translation,
+                    ),
                 )
             except ValueError:
                 logger.exception('whether_translation_is_correct error')
@@ -368,7 +380,7 @@ class LearningGameMessageSender(BaseMessageSender):
             msg = await bot.send_audio(
                 self.view.request.message.chat.id,
                 chosen_word.value_voice,
-                performer='English Learning Bot',
+                performer=f'{GENERAL.SECOND_LANG.value.title()} Learning Bot',
                 title=await group.get_label(),
             )
             self.view.user_states.add_message_to_delete(self.view.request.message.chat.id, msg.message_id)
@@ -394,6 +406,7 @@ class LearningGameView(BaseView):
         'К изучению слов',
     ]
     edit_keyboard = False
+    delete_income_messages = False
 
     message_sender = LearningGameMessageSender
     user_states_manager = LearningGameUserStatesManager

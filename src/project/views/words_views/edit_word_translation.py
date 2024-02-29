@@ -56,7 +56,8 @@ class EditWordTranslationView(BaseView):
         word.examples.clear()
         await word.update()
 
-        await bot.send_message(self.request.msg.chat.id, f'Введено слово: "{word.label}"')
+        msg = await bot.send_message(self.request.msg.chat.id, f'Введено слово: "{word.label}"')
+        self.user_states.add_message_to_delete(msg.chat.id, msg.message_id)
         callback = UserStateCb(
             view_name=r['WORD_VIEW'].value,
             params={'group_id': check_cb.params.get('group_id'), 'word_id': check_cb.params.get('word_id')},

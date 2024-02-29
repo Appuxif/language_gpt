@@ -1,8 +1,17 @@
 import os
+from enum import Enum
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+class Lang(str, Enum):
+    """Lang"""
+
+    RU = 'RUSSIAN'
+    EN = 'ENGLISH'
+    SR = 'SERBIAN'
 
 
 class GENERAL:
@@ -10,6 +19,8 @@ class GENERAL:
 
     REPORTS_TELEGRAM_BOT_TOKEN: str = str(os.environ.get('GENERAL_REPORTS_TELEGRAM_BOT_TOKEN', ''))
     REPORTS_TELEGRAM_CHAT_ID: str = str(os.environ.get('GENERAL_REPORTS_TELEGRAM_CHAT_ID', ''))
+    MAIN_LANG: Lang = Lang(os.environ.get('GENERAL_MAIN_LANG', ''))
+    SECOND_LANG: Lang = Lang(os.environ.get('GENERAL_SECOND_LANG', ''))
 
 
 class TELEGRAM:
