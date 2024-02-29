@@ -11,7 +11,7 @@ from telebot_views.base import BaseMessageSender, BaseView, Route, UserStatesMan
 from telebot_views.models import UserModel, UserStateCb
 
 from project.core.bot import bot
-from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordExample
+from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordExample, WordModel
 from project.services.openai_gpt import add_examples_to_word, whether_translation_is_correct
 from project.services.text_to_speech import add_voices_to_word, add_voices_to_word_example
 from project.views.word_learn_views.utils import MIN_WORDS_TO_START_GAME, GameLevel
@@ -184,20 +184,8 @@ class LearningGameAnswerProcessor:
             return
 
         example_id = self.chosen_word_callback.params.get('example_id')
-        value_or_translation = self.chosen_word_callback.params.get('value_or_translation')
         words = self.words.by_word(self.chosen_word_callback.params.get('word_id'))
-
-        user_word: UserWordModel = await words.find_one()
-        word_example = await user_word.word()
-        if self.game_level in (GameLevel.LEVEL_5, GameLevel.LEVEL_6) and example_id:
-            word_example = (
-                next((example for example in word_example.examples if example.id == example_id), None) or word_example
-            )
-
-        if self.game_level in (GameLevel.LEVEL_4, GameLevel.LEVEL_6):
-            word_to_translate = word_example.value if value_or_translation else word_example.translation
-        else:
-            word_to_translate = word_example.translation if value_or_translation else word_example.value
+        user_word, word_example, word_to_translate = await self._get_word_to_translate()
 
         answer_text = self.view.request.msg.text
         first_decision = clean_word(answer_text) == clean_word(word_to_translate)
@@ -236,6 +224,42 @@ class LearningGameAnswerProcessor:
             only_next=only_next,
         )
 
+    async def process_forgot_word(self) -> None:
+
+        words = self.words.by_word(self.chosen_word_callback.params.get('word_id'))
+        _, _, word_to_translate = await self._get_word_to_translate()
+
+        answer_text = f'Правильный ответ: {word_to_translate}'
+        self.view.callbacks.set_callback_answer(answer_text)
+        results = await asyncio.gather(
+            self.game_level.sub_rating(words),
+            bot.send_message(self.view.request.message.chat.id, answer_text),
+        )
+
+        self.view.user_states.add_message_to_delete(
+            self.view.request.message.chat.id,
+            results[-1].message_id,
+            only_next=False,
+        )
+
+    async def _get_word_to_translate(self) -> tuple[UserWordModel, WordExample | None | WordModel, str]:
+        words = self.words.by_word(self.chosen_word_callback.params.get('word_id'))
+        example_id = self.chosen_word_callback.params.get('example_id')
+        value_or_translation = self.chosen_word_callback.params.get('value_or_translation')
+
+        user_word: UserWordModel = await words.find_one()
+        word_example = await user_word.word()
+        if self.game_level in (GameLevel.LEVEL_5, GameLevel.LEVEL_6) and example_id:
+            word_example = (
+                next((example for example in word_example.examples if example.id == example_id), None) or word_example
+            )
+
+        if self.game_level in (GameLevel.LEVEL_4, GameLevel.LEVEL_6):
+            word_to_translate = word_example.value if value_or_translation else word_example.translation
+        else:
+            word_to_translate = word_example.translation if value_or_translation else word_example.value
+        return user_word, word_example, word_to_translate
+
 
 class LearningGameMessageSender(BaseMessageSender):
     """Learning Game Message Sender"""
@@ -258,8 +282,13 @@ class LearningGameMessageSender(BaseMessageSender):
     async def get_keyboard(self) -> list[list[InlineKeyboardButton]]:
 
         user = await self.view.request.get_user()
+        processor = LearningGameAnswerProcessor(self.view, user)
+
         if self.view.callback.id != 'skip_word':
-            await LearningGameAnswerProcessor(self.view, user).run()
+            if self.view.callback.id == 'forgot_word':
+                await processor.process_forgot_word()
+            else:
+                await processor.run()
 
             if self.view.callbacks.callback_answer:
                 return []
@@ -294,9 +323,17 @@ class LearningGameMessageSender(BaseMessageSender):
             view_name=self.view.view_name,
             params={'group_id': self.view.callback.params.get('group_id')},
         )
+        forgot_cb = UserStateCb(
+            id='forgot_word',
+            view_name=self.view.view_name,
+            params={'group_id': self.view.callback.params.get('group_id'), 'word_id': user_word.word_id},
+        )
         return [
             *(await self.builder.get_buttons_to_choose(user_words)),
-            [await self.view.buttons.btn('» Пропустить', skip_cb)],
+            [
+                await self.view.buttons.btn('💁 Не помню', forgot_cb),
+                await self.view.buttons.btn('» Пропустить', skip_cb),
+            ],
             [await self.view.buttons.btn('🤚 Завершить', exit_cb)],
         ]
 
