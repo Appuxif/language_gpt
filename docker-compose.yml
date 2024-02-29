@@ -2,7 +2,7 @@ version: "3.7"
 
 networks:
   language_gpt_network:
-    name: language_gpt_network
+    name: ${DOCKER_NETWORK_NAME}
     driver: bridge
 
 volumes:
@@ -17,7 +17,7 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - /tmp:/tmp
+      - ./.tmp:/tmp
     networks:
       - language_gpt_network
     depends_on:
@@ -36,10 +36,10 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=project
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     ports:
-      - "127.0.0.1:37017:27017"
+      - "127.0.0.1:${DOCKER_MONGO_CONTAINER_PORT}:27017"
     volumes:
       - mongo_data:/data
-      - /tmp:/tmp
+      - ./.tmp:/tmp
     command: mongod --wiredTigerCacheSizeGB 2 --port 27017
     networks:
       - language_gpt_network
