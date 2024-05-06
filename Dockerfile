@@ -1,4 +1,4 @@
-FROM python:3.10.11-buster
+FROM python:3.10.14-bookworm
 RUN apt-get -y update
 RUN apt-get -y upgrade
 RUN apt-get install -y ffmpeg

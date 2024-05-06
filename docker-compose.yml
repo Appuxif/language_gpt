@@ -6,7 +6,7 @@ networks:
     driver: bridge
 
 volumes:
-  mongo_data: { }
+  mongo_data_db: { }
 
 services:
   project:
@@ -16,8 +16,6 @@ services:
     restart: unless-stopped
     stdin_open: true
     tty: true
-    volumes:
-      - ./.tmp:/tmp
     networks:
       - language_gpt_network
     depends_on:
@@ -38,8 +36,7 @@ services:
     ports:
       - "127.0.0.1:${DOCKER_MONGO_CONTAINER_PORT}:27017"
     volumes:
-      - mongo_data:/data
-      - ./.tmp:/tmp
+      - mongo_data_db:/data/db
     command: mongod --wiredTigerCacheSizeGB 2 --port 27017
     networks:
       - language_gpt_network
