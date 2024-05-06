@@ -59,14 +59,14 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pymongo = "4.3.3"
+pymongo = "4.6.3"
 motor = "3.1.2"
 python-dotenv = "0.21.0"
 pytelegrambotapi = "4.10.0"
-aiohttp = "3.8.4"
-pydantic = "1.10.9"
+aiohttp = "3.9.4"
+pydantic = "1.10.13"
 openai = "1.13.3"
-ipython = "8.7.0"
+ipython = "8.10.0"
 google-cloud-texttospeech = "^2.14.1"
 pydub = "0.25.1"
 urllib3 = "^1.26.0"
@@ -74,6 +74,12 @@ poetry = "1.4.0"
 telebot_models = {url = "https://github.com/Appuxif/telebot_models/archive/refs/tags/0.0.7b2.tar.gz"}
 telebot_views = {url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.11.tar.gz"}
 asyncio_functools = {url = "https://github.com/Appuxif/asyncio_functools/archive/refs/tags/0.0.2.tar.gz"}
+
+## misc
+#dnspython = "2.6.1"
+#idna = "3.7"
+#urllib3 = "1.26.18"
+#tqdm = "4.66.3"
 
 [tool.pytest.ini_options]
 markers = [
@@ -86,7 +92,7 @@ pytest-black = "0.3.12"
 pytest-asyncio = "0.20.3"
 pytest-mock = "3.10.0"
 isort = "5.10.1"
-black = "22.10.0"
+black = "24.3.0"
 pylint = "2.15.8"
 pylint-pydantic = "0.1.4"
 
