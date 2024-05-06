@@ -2,8 +2,10 @@ import asyncio
 from typing import Optional
 
 from telebot.types import InlineKeyboardButton
+from telebot_views import bot
 from telebot_views.base import BaseMessageSender, BaseView
 from telebot_views.models import UserStateCb
+from telebot_views.models.links import LinkModel
 
 from project.db.models.words import UserWordGroupModel, WordGroupModel, WordModel
 
@@ -50,11 +52,19 @@ class PublicGroupMessageSender(BaseMessageSender):
                     ),
                 ]
             )
+        get_link_cb = self.view.callback.copy(update={'id': 'get_link', 'view_name': self.view.view_name})
+
+        if self.view.callback.id == get_link_cb.id:
+            link = await LinkModel.manager().get_or_create(LinkModel(callback=get_link_cb))
+            await bot.bot.send_message(
+                self.view.request.message.chat.id, link.get_bot_start_link(), disable_web_page_preview=True
+            )
 
         return [
             *words_btns,
             *(await self.view.paginator.get_pagination(await manager.count(), page_num, params={'group_id': group_id})),
             *additional_btns,
+            [await self.view.buttons.btn('🔗 Получить ссылку', get_link_cb)],
             [await self.view.buttons.view_btn(r['PUBLIC_GROUPS_VIEW'], 1)],
         ]
 

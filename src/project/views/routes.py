@@ -1,4 +1,5 @@
 from telebot_views.base import Route
+from telebot_views.views.links_view import LinksView
 
 from project.views.check_sub import CheckSubView
 from project.views.main import MainView
@@ -24,6 +25,7 @@ from project.views.words_views.word import WordView
 routes = [
     Route(CheckSubView),
     Route(MainView),
+    Route(LinksView),
 ]
 
 # user groups
