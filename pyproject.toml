@@ -72,7 +72,7 @@ pydub = "0.25.1"
 urllib3 = "^1.26.0"
 poetry = "1.4.0"
 telebot_models = {url = "https://github.com/Appuxif/telebot_models/archive/refs/tags/0.0.7.tar.gz"}
-telebot_views = {url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.19.tar.gz"}
+telebot_views = {url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.20.tar.gz"}
 asyncio_functools = {url = "https://github.com/Appuxif/asyncio_functools/archive/refs/tags/0.0.2.tar.gz"}
 
 ## misc

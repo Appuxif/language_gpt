@@ -22,6 +22,7 @@ class WordMessageSender(BaseMessageSender):
         r = self.view.route_resolver.routes_registry
         group_id = self.view.callback.params.get('group_id')
         page_num = self.view.callback.page_num
+        user = await self.view.request.get_user()
 
         self.user_word: UserWordModel = await (await self.manager).find_one()
         word, group = await asyncio.gather(
@@ -50,7 +51,7 @@ class WordMessageSender(BaseMessageSender):
 
         edit_btns = []
         delete_btns = []
-        if not group.is_public:
+        if not group.is_public or user.is_superuser:
             edit_btns.append(
                 [
                     await self.view.buttons.view_btn(r['EDIT_WORD_VIEW'], 1, params=self.view.callback.params),
