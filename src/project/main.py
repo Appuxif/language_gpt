@@ -2,11 +2,11 @@ import asyncio
 from logging import getLogger
 
 import telebot_views
+from telebot_views.log import configure_logging
 from telebot_views.models.cache import CacheModel
 from telebot_views.utils import now_utc
 
 from project.core.bot import bot
-from project.core.logging import configure_logging
 from project.db.mongodb import get_database
 from project.views.routes import routes
 
@@ -44,7 +44,7 @@ def run_loop():
         loop.run_until_complete(loop.shutdown_default_executor())
 
 
-configure_logging()
+configure_logging({})
 
 if __name__ == '__main__':
     run_loop()
