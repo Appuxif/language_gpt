@@ -45,6 +45,8 @@ class PublishUserGroupView(BaseView):
 
     view_name = 'PUBLISH_USER_GROUP_VIEW'
     edit_keyboard = True
+    delete_income_messages = True
+    ignore_income_messages = True
     labels = [
         'Опубликовать подборку?',
         '🌎 Опубликовать подборку',

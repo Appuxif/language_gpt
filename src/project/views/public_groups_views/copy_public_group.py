@@ -50,6 +50,8 @@ class CopyPublicGroupView(BaseView):
 
     view_name = 'COPY_PUBLIC_GROUP_VIEW'
     edit_keyboard = True
+    delete_income_messages = True
+    ignore_income_messages = True
     labels = [
         'Подборка',
         '🚶 В Подборку',
@@ -89,7 +91,7 @@ class CopyPublicGroupView(BaseView):
         user_group = UserWordGroupModel(user_id=user.id, group_id=group_id)
         words = await WordModel.manager().by_wordgroup(group_id).filter({'is_active': True}).find_all()
 
-        # TODO: add to manager insert_many method
+        # TODO: add to manager insert_many method  # pylint: disable=fixme
         documents: list[dict[Any, Any]] = []
         for word in words:
             user_word = UserWordModel(user_id=user.id, group_id=group_id, word_id=word.id, is_active=True)

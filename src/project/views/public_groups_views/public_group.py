@@ -86,6 +86,8 @@ class PublicGroupView(BaseView):
 
     view_name = 'PUBLIC_GROUP_VIEW'
     edit_keyboard = True
+    delete_income_messages = True
+    ignore_income_messages = True
     labels = [
         'Подборка',
         '🚶 В Подборку',

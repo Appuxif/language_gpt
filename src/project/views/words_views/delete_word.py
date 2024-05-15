@@ -52,6 +52,8 @@ class DeleteWordView(BaseView):
     """Отображение удаления слова"""
 
     view_name = 'DELETE_WORD_VIEW'
+    delete_income_messages = True
+    ignore_income_messages = True
     labels = [
         'Удалить слово?',
         '♻ Удалить слово',

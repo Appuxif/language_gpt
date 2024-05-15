@@ -41,6 +41,8 @@ class UserGroupsView(BaseView):
 
     view_name = 'USER_GROUPS_VIEW'
     edit_keyboard = True
+    delete_income_messages = True
+    ignore_income_messages = True
     labels = [
         'Мои подборки',
         '💻 В мои подборки',

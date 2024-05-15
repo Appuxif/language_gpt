@@ -74,4 +74,9 @@ class EditWordView(BaseView):
             view_name=r['WORD_VIEW'].value,
             params={'group_id': check_cb.params.get('group_id'), 'word_id': check_cb.params.get('word_id')},
         )
-        return r['WORD_VIEW'].view(self.request, callback=callback, edit_keyboard=False)
+        return r['WORD_VIEW'].view(
+            self.request,
+            callback=callback,
+            edit_keyboard=False,
+            ignore_income_messages=False,
+        )

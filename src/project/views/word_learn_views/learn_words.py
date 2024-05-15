@@ -143,6 +143,8 @@ class LearnWordsView(BaseView):
     """Отображение страницы начала изучения слов"""
 
     view_name = 'LEARN_WORDS_VIEW'
+    delete_income_messages = True
+    ignore_income_messages = True
     labels = [
         '🎓 Учить слова',
         'К изучению слов',

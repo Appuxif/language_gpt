@@ -128,6 +128,8 @@ class WordView(BaseView):
     """Отображение слова в подборке"""
 
     view_name = 'WORD_VIEW'
+    delete_income_messages = True
+    ignore_income_messages = True
     labels = [
         'Слово',
         'Слово',

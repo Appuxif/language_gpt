@@ -69,4 +69,9 @@ class AddWordTranslationView(BaseView):
             view_name=r['USER_GROUP_VIEW'].value,
             params=check_cb.params,
         )
-        return r['USER_GROUP_VIEW'].view(self.request, callback=callback, edit_keyboard=False)
+        return r['USER_GROUP_VIEW'].view(
+            self.request,
+            callback=callback,
+            edit_keyboard=False,
+            ignore_income_messages=False,
+        )

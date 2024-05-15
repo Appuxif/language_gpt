@@ -79,6 +79,8 @@ class PublicWordView(BaseView):
     """Отображение слова в публичной подборке"""
 
     view_name = 'PUBLIC_WORD_VIEW'
+    delete_income_messages = True
+    ignore_income_messages = True
     labels = [
         'Слово',
         'Слово',
