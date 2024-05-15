@@ -3,11 +3,10 @@ from functools import partial
 from typing import Any, Coroutine
 
 from telebot.types import InlineKeyboardButton
+from telebot_views import bot
 from telebot_views.base import BaseMessageSender, BaseView
 from telebot_views.models import UserStateCb
 
-from project.core.bot import bot
-from project.core.settings import GENERAL
 from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordModel
 from project.services.audios import concat_audios
 from project.services.text_to_speech import add_voices_to_word
@@ -87,7 +86,7 @@ class LearnWordsMessageSender(BaseMessageSender):
             )
             return
 
-        await bot.send_chat_action(self.view.request.message.chat.id, 'upload_audio', timeout=120)
+        await bot.bot.send_chat_action(self.view.request.message.chat.id, 'upload_audio', timeout=120)
 
         words_audios = (
             await WordModel.manager()
@@ -99,13 +98,14 @@ class LearnWordsMessageSender(BaseMessageSender):
             *(item for word in words_audios for item in (word.value_voice, word.translation_voice))
         )
         group = await (await self.user_group).wordgroup()
-        caption = f'Words: {len(words_audios)}\n'
+        caption = f'@{bot.bot.user.username}\n\n'
+        caption += f'Words: {len(words_audios)}\n'
         for word in words_audios:
             caption += f'{word.label}\n'
-        await bot.send_audio(
+        await bot.bot.send_audio(
             self.view.request.message.chat.id,
             result_audio,
-            performer=f'{GENERAL.SECOND_LANG.value.title()} Learning Bot',
+            performer=bot.bot.user.first_name,
             title=group.name,
             caption=caption,
         )

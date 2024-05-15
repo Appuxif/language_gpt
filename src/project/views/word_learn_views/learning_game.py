@@ -7,11 +7,10 @@ from random import choices, randint, shuffle
 from typing import Coroutine
 
 from telebot.types import InlineKeyboardButton
+from telebot_views import bot
 from telebot_views.base import BaseMessageSender, BaseView, Route, UserStatesManager
 from telebot_views.models import UserModel, UserStateCb
 
-from project.core.bot import bot
-from project.core.settings import GENERAL
 from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordExample, WordModel
 from project.services.openai_gpt import add_examples_to_word, whether_translation_is_correct
 from project.services.text_to_speech import add_voices_to_word, add_voices_to_word_example
@@ -64,17 +63,20 @@ class LearningGameButtonsBuilder:
 
         if self.game_level in (GameLevel.LEVEL_5, GameLevel.LEVEL_6):
             if not chosen_word.examples:
+                # noinspection PyAsyncCall
                 asyncio.create_task(add_examples_to_word(chosen_word))
                 self.game_level = GameLevel.LEVEL_4
 
         if self.game_level in (GameLevel.LEVEL_6,):
             for word_example in chosen_word.examples:
                 if not word_example.value_voice or not word_example.translation_voice:
+                    # noinspection PyAsyncCall
                     asyncio.create_task(add_voices_to_word_example(chosen_word, word_example))
                     self.game_level = GameLevel.LEVEL_5
 
         if self.game_level in (GameLevel.LEVEL_4,):
             if not chosen_word.value_voice or not chosen_word.translation_voice:
+                # noinspection PyAsyncCall
                 asyncio.create_task(add_voices_to_word(chosen_word))
                 self.game_level = GameLevel.LEVEL_3
 
@@ -181,7 +183,7 @@ class LearningGameAnswerProcessor:
 
         if self.game_level == GameLevel.LEVEL_1:
             self.view.callbacks.set_callback_answer('☝️ Сейчас нужно ВЫБРАТЬ вариант ответа')
-            msg = await bot.send_message(self.view.request.msg.chat.id, self.view.callbacks.callback_answer)
+            msg = await bot.bot.send_message(self.view.request.msg.chat.id, self.view.callbacks.callback_answer)
             self.view.user_states.add_message_to_delete(self.view.request.msg.chat.id, msg.message_id)
             return
 
@@ -202,7 +204,7 @@ class LearningGameAnswerProcessor:
         if self.game_level in (GameLevel.LEVEL_5,) and example_id and decision is False:
             try:
                 _, (decision, answer_text) = await asyncio.gather(
-                    bot.send_chat_action(self.view.request.message.chat.id, 'typing', timeout=120),
+                    bot.bot.send_chat_action(self.view.request.message.chat.id, 'typing', timeout=120),
                     whether_translation_is_correct(
                         await user_word.word(),
                         word_example,
@@ -228,7 +230,7 @@ class LearningGameAnswerProcessor:
             tasks.append(self.game_level.sub_rating(words))
             only_next = False
 
-        tasks.append(bot.send_message(self.view.request.msg.chat.id, answer_text))
+        tasks.append(bot.bot.send_message(self.view.request.msg.chat.id, answer_text))
         results = await asyncio.gather(*tasks)
 
         self.view.user_states.add_message_to_delete(
@@ -246,7 +248,7 @@ class LearningGameAnswerProcessor:
         self.view.callbacks.set_callback_answer(answer_text)
         results = await asyncio.gather(
             self.game_level.sub_rating(words),
-            bot.send_message(self.view.request.message.chat.id, answer_text),
+            bot.bot.send_message(self.view.request.message.chat.id, answer_text),
         )
 
         self.view.user_states.add_message_to_delete(
@@ -377,10 +379,10 @@ class LearningGameMessageSender(BaseMessageSender):
             text += chosen_word_value
 
         elif data_type == self.builder.DataType.AUDIO:
-            msg = await bot.send_audio(
+            msg = await bot.bot.send_audio(
                 self.view.request.message.chat.id,
                 chosen_word.value_voice,
-                performer=f'{GENERAL.SECOND_LANG.value.title()} Learning Bot',
+                performer=bot.bot.user.first_name,
                 title=await group.get_label(),
             )
             self.view.user_states.add_message_to_delete(self.view.request.message.chat.id, msg.message_id)

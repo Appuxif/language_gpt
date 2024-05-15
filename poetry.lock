@@ -2775,13 +2775,13 @@ type = "url"
 url = "https://github.com/Appuxif/telebot_models/archive/refs/tags/0.0.7.tar.gz"
 [[package]]
 name = "telebot_views"
-version = "0.0.20"
+version = "0.0.21"
 description = ""
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "0.0.20.tar.gz", hash = "sha256:fc0b9058c914f7df1e68594e605c01ad1a2d1af1c8d9dbf219bbbfd69b1188fc"},
+    {file = "0.0.21.tar.gz", hash = "sha256:33666d2a7e1b0d2a98c1516dec863c2cc5baac590bea2037b1114121abefc013"},
 ]
 
 [package.dependencies]
@@ -2792,7 +2792,7 @@ telebot_models = ">=0.0.2,<1.0.0"
 
 [package.source]
 type = "url"
-url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.20.tar.gz"
+url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.21.tar.gz"
 [[package]]
 name = "toml"
 version = "0.10.2"
@@ -3240,4 +3240,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "81a88f75a404aa92a9defd770549db2c90b240f38f071bfe20892ccb3bc8936e"
+content-hash = "905765bae9c08d84302ea620d9e7412879e890159a2b0c7e4349915ea89ba3da"

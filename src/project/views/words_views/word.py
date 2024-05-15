@@ -2,11 +2,10 @@ import asyncio
 from typing import Any, Coroutine
 
 from telebot.types import InlineKeyboardButton
+from telebot_views import bot
 from telebot_views.base import BaseMessageSender, BaseView
 from telebot_views.models import UserStateCb
 
-from project.core.bot import bot
-from project.core.settings import GENERAL
 from project.db.models.words import UserWordModel, UserWordModelManager
 from project.services.audios import concat_audios
 from project.services.openai_gpt import add_examples_to_word
@@ -32,20 +31,21 @@ class WordMessageSender(BaseMessageSender):
 
         if self.view.callback.id == 'listen':
             await asyncio.gather(
-                bot.send_chat_action(self.view.request.message.chat.id, 'upload_audio', timeout=120),
+                bot.bot.send_chat_action(self.view.request.message.chat.id, 'upload_audio', timeout=120),
                 add_voices_to_word(word, save=True),
             )
-            await bot.send_audio(
+            caption = f'@{bot.bot.user.username}\n\n' + word.label
+            await bot.bot.send_audio(
                 self.view.request.message.chat.id,
                 concat_audios(word.value_voice, word.translation_voice),
-                performer=f'{GENERAL.SECOND_LANG.value.title()} Learning Bot',
+                performer=bot.bot.user.first_name,
                 title=word.value,
-                caption=word.label,
+                caption=caption,
             )
 
         if self.view.callback.id == 'load_examples':
             await asyncio.gather(
-                bot.send_chat_action(self.view.request.message.chat.id, 'typing', timeout=120),
+                bot.bot.send_chat_action(self.view.request.message.chat.id, 'typing', timeout=120),
                 add_examples_to_word(word, save=True),
             )
 

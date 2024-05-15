@@ -1,11 +1,10 @@
 from typing import Any, Coroutine
 
 from telebot.types import InlineKeyboardButton
+from telebot_views import bot
 from telebot_views.base import BaseMessageSender, BaseView
 from telebot_views.models import UserStateCb
 
-from project.core.bot import bot
-from project.core.settings import GENERAL
 from project.db.models.words import WordModel, WordModelManager
 from project.services.audios import concat_audios
 from project.services.text_to_speech import add_voices_to_word
@@ -24,14 +23,15 @@ class PublicWordMessageSender(BaseMessageSender):
         self.word: WordModel = await (await self.manager).find_one()
 
         if self.view.callback.id == 'listen':
-            await bot.send_chat_action(self.view.request.message.chat.id, 'upload_audio', timeout=120)
+            await bot.bot.send_chat_action(self.view.request.message.chat.id, 'upload_audio', timeout=120)
             await add_voices_to_word(self.word, save=True)
-            await bot.send_audio(
+            caption = f'@{bot.bot.user.username}\n\n' + self.word.label
+            await bot.bot.send_audio(
                 self.view.request.message.chat.id,
                 concat_audios(self.word.value_voice, self.word.translation_voice),
-                performer=f'{GENERAL.SECOND_LANG.value.title()} Learning Bot',
+                performer=bot.bot.user.first_name,
                 title=self.word.value,
-                caption=self.word.label,
+                caption=caption,
             )
 
         return [
