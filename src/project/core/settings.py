@@ -5,6 +5,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from telebot_views.log import configure_logging  # pylint: disable=wrong-import-position
+
+configure_logging({})
+
 
 class Lang(str, Enum):
     """Lang"""

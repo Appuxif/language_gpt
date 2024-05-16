@@ -2,10 +2,10 @@ import asyncio
 from logging import getLogger
 
 import telebot_views
-from telebot_views.log import configure_logging
 from telebot_views.models.cache import CacheModel
 from telebot_views.utils import now_utc
 
+import project
 from project.core.bot import bot
 from project.db.mongodb import get_database
 from project.views.routes import routes
@@ -13,7 +13,7 @@ from project.views.routes import routes
 logger = getLogger(__name__)
 
 
-telebot_views.init(bot, routes, skip_non_private=True)
+telebot_views.init(bot, routes, skip_non_private=True, loop=project.loop)
 
 
 async def task_clear_cache() -> None:
@@ -29,22 +29,23 @@ async def task_clear_cache() -> None:
 
 
 async def run():
-    asyncio.create_task(task_clear_cache())
+    _task = asyncio.create_task(task_clear_cache())
     await get_database().list_collection_names()
     await bot.delete_webhook()
     await bot.polling(non_stop=True, skip_pending=True)
+    await _task
 
 
 def run_loop():
     loop = asyncio.get_event_loop()
     try:
         loop.run_until_complete(run())
+    except (KeyboardInterrupt, SystemExit):
+        logger.info('Caught KeyboardInterrupt')
     finally:
         loop.run_until_complete(loop.shutdown_asyncgens())
         loop.run_until_complete(loop.shutdown_default_executor())
 
-
-configure_logging({})
 
 if __name__ == '__main__':
     run_loop()

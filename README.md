@@ -16,4 +16,4 @@ https://t.me/eng2learnbot
 2. Change ENV values:  
     > vim .env
 3. Run docker:  
-    > sudo docker-compose up --build -d
+    > sudo docker compose up --build -d

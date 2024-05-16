@@ -21,3 +21,4 @@ COPY ./pyproject.toml /home/project/project
 RUN poetry install --only main -n -v --no-root --no-cache
 
 COPY . /home/project/project
+RUN poetry install --only main -n -v --no-cache

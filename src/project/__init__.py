@@ -3,6 +3,7 @@ from logging import getLogger
 
 import telebot_models.models
 
+import project.core.settings
 from project.db.mongodb import get_collection
 
 logger = getLogger('project')

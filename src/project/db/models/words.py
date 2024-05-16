@@ -13,7 +13,7 @@ class WordGroupModel(Model):
 
     name: str = ''
     is_public: bool = False
-    stars: int = 0  # TODO: implement starring public groups
+    stars: int = 0  # TODO: implement starring public groups  # pylint: disable=fixme
 
     manager: ClassVar[Type['WordGroupModelManager']]
 

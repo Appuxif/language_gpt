@@ -14,16 +14,6 @@ sections = 'FUTURE,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER'
 [tool.pylint."MASTER"]
 extension-pkg-whitelist = ['pydantic']
 load-plugins = ['pylint_pydantic']
-init-hook = '''
-import sys
-import os
-from pathlib import Path
-
-path = Path(os.path.abspath(os.curdir))
-
-sys.path.append(str(path / 'src'))
-sys.path.append(str(path / 'src' / 'project'))
-'''
 ignore = [
     'celeryconfig.py',
 ]
@@ -72,14 +62,8 @@ pydub = "0.25.1"
 urllib3 = "^1.26.0"
 poetry = "1.4.0"
 telebot_models = {url = "https://github.com/Appuxif/telebot_models/archive/refs/tags/0.0.7.tar.gz"}
-telebot_views = {url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.21.tar.gz"}
+telebot_views = {url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.22.tar.gz"}
 asyncio_functools = {url = "https://github.com/Appuxif/asyncio_functools/archive/refs/tags/0.0.2.tar.gz"}
-
-## misc
-#dnspython = "2.6.1"
-#idna = "3.7"
-#urllib3 = "1.26.18"
-#tqdm = "4.66.3"
 
 [tool.pytest.ini_options]
 markers = [
