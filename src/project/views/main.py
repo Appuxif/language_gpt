@@ -10,9 +10,18 @@ class MainMessageSender(BaseMainMessageSender):
     async def get_keyboard(self) -> list[list[InlineKeyboardButton]]:
         results = await super().get_keyboard()
         r = self.view.route_resolver.routes_registry
+        user = await self.view.request.get_user()
+
+        admin_btns = []
+        if user.is_superuser:
+            admin_btns += [
+                [await self.view.buttons.view_btn(r['MAIN_ADMIN_VIEW'], 0)],
+            ]
+
         return results + [
             [await self.view.buttons.view_btn(r['USER_GROUPS_VIEW'], 1)],
             [await self.view.buttons.view_btn(r['PUBLIC_GROUPS_VIEW'], 1)],
+            *admin_btns,
             # [await self.view.buttons.btn('Переводчик', cb(view_name=r['TRANSLATOR_VIEW']))],
             # [await self.view.buttons.btn('Общение с AI', cb(view_name=r['AI_CHAT_VIEW']))],
             # [await self.view.buttons.btn('Статистика', cb(view_name=r['STATISTICS_VIEW']))],

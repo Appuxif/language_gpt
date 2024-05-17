@@ -23,4 +23,5 @@ def exception_handler(_loop, context) -> None:
 
 loop = asyncio.new_event_loop()
 loop.set_exception_handler(exception_handler)
+
 asyncio.set_event_loop(loop)

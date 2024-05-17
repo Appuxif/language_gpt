@@ -10,6 +10,8 @@ volumes:
 
 services:
   project:
+    stop_signal: SIGINT
+    stop_grace_period: 15s
     build:
       context: .
       dockerfile: ./Dockerfile

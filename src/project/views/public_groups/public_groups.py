@@ -18,10 +18,8 @@ class PublicGroupsMessageSender(BaseMessageSender):
         user.constants['PUBLIC_GROUPS_VIEW_PAGE_NUM'] = page_num
 
         manager = WordGroupModel.manager().filter({'is_public': True})
-        groups_count, groups = await asyncio.gather(
-            manager.count(),
-            self.view.paginator.paginate(manager, page_num),
-        )  # type: int, list[WordGroupModel]
+        groups_count = await manager.count()
+        groups: list[WordGroupModel] = await self.view.paginator.paginate(manager, page_num, groups_count)
 
         async def prepare_btn(group: WordGroupModel) -> list[InlineKeyboardButton]:
             callback = cb(view_name=r['PUBLIC_GROUP_VIEW'].value, params={'group_id': group.id})

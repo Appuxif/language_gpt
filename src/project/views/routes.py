@@ -1,6 +1,9 @@
 from telebot_views.base import Route
 from telebot_views.views.links_view import LinksView
 
+from project.views.admin.main import MainAdminView
+from project.views.admin.user import UserDetailAdminView
+from project.views.admin.users import UsersAdminView
 from project.views.check_sub import CheckSubView
 from project.views.main import MainView
 from project.views.public_groups.copy_public_group import CopyPublicGroupView
@@ -59,4 +62,11 @@ routes += [
     Route(PublicGroupView),
     Route(PublicGroupsView),
     Route(PublicWordView),
+]
+
+# Admin
+routes += [
+    Route(MainAdminView),
+    Route(UsersAdminView),
+    Route(UserDetailAdminView),
 ]

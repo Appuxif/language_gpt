@@ -1,4 +1,6 @@
 import asyncio
+import functools
+import signal
 from logging import getLogger
 
 import telebot_views
@@ -6,14 +8,22 @@ from telebot_views.models.cache import CacheModel
 from telebot_views.utils import now_utc
 
 import project
-from project.core.bot import bot
+from project.core.bot import bot, reports_bot
+from project.core.settings import GENERAL
 from project.db.mongodb import get_database
 from project.views.routes import routes
 
 logger = getLogger(__name__)
 
 
-telebot_views.init(bot, routes, skip_non_private=True, loop=project.loop)
+telebot_views.init(
+    tele_bot=bot,
+    routes=routes,
+    skip_non_private=True,
+    reports_bot=reports_bot,
+    reports_chat_id=GENERAL.REPORTS_TELEGRAM_CHAT_ID,
+    loop=project.loop,
+)
 
 
 async def task_clear_cache() -> None:
@@ -29,6 +39,9 @@ async def task_clear_cache() -> None:
 
 
 async def run():
+    loop = asyncio.get_running_loop()
+    for signame in ('SIGINT', 'SIGTERM'):
+        loop.add_signal_handler(getattr(signal, signame), functools.partial(_ask_exit, signame, loop))
     _task = asyncio.create_task(task_clear_cache())
     await get_database().list_collection_names()
     await bot.delete_webhook()
@@ -43,8 +56,40 @@ def run_loop():
     except (KeyboardInterrupt, SystemExit):
         logger.info('Caught KeyboardInterrupt')
     finally:
+        _cancel_all_tasks(loop)
+        logger.info('Async Tasks cancelled')
         loop.run_until_complete(loop.shutdown_asyncgens())
         loop.run_until_complete(loop.shutdown_default_executor())
+        loop.close()
+        logger.info('Loop closed')
+
+
+def _ask_exit(_signame, _loop: asyncio.BaseEventLoop):
+    logger.info("got signal %s: exit", _signame)
+    raise SystemExit
+
+
+def _cancel_all_tasks(loop):
+    to_cancel = asyncio.all_tasks(loop)
+    if not to_cancel:
+        return
+
+    for task in to_cancel:
+        task.cancel()
+
+    loop.run_until_complete(asyncio.gather(*to_cancel, return_exceptions=True))
+
+    for task in to_cancel:
+        if task.cancelled():
+            continue
+        if task.exception() is not None:
+            loop.call_exception_handler(
+                {
+                    'message': 'unhandled exception during run() shutdown',
+                    'exception': task.exception(),
+                    'task': task,
+                }
+            )
 
 
 if __name__ == '__main__':

@@ -19,11 +19,11 @@ class UserGroupMessageSender(BaseMessageSender):
         page_num = self.view.callback.page_num or 1
 
         manager = UserWordModel.manager().by_user(user.id).by_wordgroup(group_id)
-        group, word_count, user_words = await asyncio.gather(
+        word_count = await manager.count()
+        group, user_words = await asyncio.gather(
             WordGroupModel.manager().find_one(group_id),
-            manager.count(),
-            self.view.paginator.paginate(manager, page_num, prefetch_words=True),
-        )  # type: WordGroupModel, int, list[UserWordModel]
+            self.view.paginator.paginate(manager, page_num, word_count, prefetch_words=True),
+        )  # type: WordGroupModel, list[UserWordModel]
 
         # Вывод слов на клавиатуре, если слова вообще есть
         async def prepare_word(user_word: UserWordModel) -> list[InlineKeyboardButton]:

@@ -23,9 +23,10 @@ class PublicGroupMessageSender(BaseMessageSender):
         user = await self.view.request.get_user()
 
         manager = WordModel.manager().by_wordgroup(group_id)
-        user_words: list[WordModel] = await self.view.paginator.paginate(manager, page_num)
-        self.user_group = (
-            await UserWordGroupModel.manager().by_user(user.id).by_wordgroup(group_id).find_one(raise_exception=False)
+        count = await manager.count()
+        self.user_group, user_words = await asyncio.gather(
+            UserWordGroupModel.manager().by_user(user.id).by_wordgroup(group_id).find_one(raise_exception=False),
+            self.view.paginator.paginate(manager, page_num, count),
         )
 
         # Вывод слов на клавиатуре, если слова вообще есть
@@ -62,7 +63,7 @@ class PublicGroupMessageSender(BaseMessageSender):
 
         return [
             *words_btns,
-            *(await self.view.paginator.get_pagination(await manager.count(), page_num, params={'group_id': group_id})),
+            *(await self.view.paginator.get_pagination(count, page_num, params={'group_id': group_id})),
             *additional_btns,
             [await self.view.buttons.btn('🔗 Получить ссылку', get_link_cb)],
             [await self.view.buttons.view_btn(r['PUBLIC_GROUPS_VIEW'], 1)],

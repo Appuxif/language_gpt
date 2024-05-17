@@ -27,6 +27,7 @@ disable = [
     "too-many-ancestors",
     "missing-function-docstring",
     "missing-module-docstring",
+    "missing-class-docstring",
     "duplicate-code"
 ]
 [tool.pylint."BASIC"]
@@ -62,7 +63,7 @@ pydub = "0.25.1"
 urllib3 = "^1.26.0"
 poetry = "1.4.0"
 telebot_models = {url = "https://github.com/Appuxif/telebot_models/archive/refs/tags/0.0.7.tar.gz"}
-telebot_views = {url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.22.tar.gz"}
+telebot_views = {url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.24.tar.gz"}
 asyncio_functools = {url = "https://github.com/Appuxif/asyncio_functools/archive/refs/tags/0.0.2.tar.gz"}
 
 [tool.pytest.ini_options]

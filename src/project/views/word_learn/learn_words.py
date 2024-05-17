@@ -38,10 +38,8 @@ class LearnWordsMessageSender(BaseMessageSender):
                 [{'$set': {'is_chosen': {'$not': '$is_chosen'}}}]
             )
 
-        words_count, user_words = await asyncio.gather(
-            manager.count(),
-            self.view.paginator.paginate(manager, page_num, prefetch_words=True),
-        )  # type: int, list[UserWordModel]
+        words_count = await manager.count()
+        user_words = await self.view.paginator.paginate(manager, page_num, words_count, prefetch_words=True)
 
         # Вывод слов на клавиатуре, если слова вообще есть
         words_btns = []

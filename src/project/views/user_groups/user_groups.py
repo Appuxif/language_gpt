@@ -17,7 +17,7 @@ class UserGroupsMessageSender(BaseMessageSender):
 
         manager = UserWordGroupModel.manager().by_user(user.id)
         groups_count = await manager.count()
-        groups: list[UserWordGroupModel] = await self.view.paginator.paginate(manager, page_num)
+        groups: list[UserWordGroupModel] = await self.view.paginator.paginate(manager, page_num, groups_count)
 
         groups_list = []
         for group in groups:
