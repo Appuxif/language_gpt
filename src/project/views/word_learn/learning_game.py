@@ -14,7 +14,7 @@ from telebot_views.models import UserModel, UserStateCb
 from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordExample, WordModel
 from project.services.openai_gpt import add_examples_to_word, whether_translation_is_correct
 from project.services.text_to_speech import add_voices_to_word, add_voices_to_word_example
-from project.views.word_learn_views.utils import MIN_WORDS_TO_START_GAME, GameLevel
+from project.views.word_learn.utils import MIN_WORDS_TO_START_GAME, GameLevel
 
 logger = getLogger(__name__)
 

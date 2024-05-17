@@ -5,7 +5,7 @@ from telebot_models.models import BaseModelManager, Model, PyObjectId
 from telebot_views.models import UserModelManager
 
 from project.db.models.users import WithUser
-from project.views.word_learn_views.utils import GameLevel
+from project.views.word_learn.utils import GameLevel
 
 
 class WordGroupModel(Model):

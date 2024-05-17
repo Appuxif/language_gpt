@@ -10,7 +10,7 @@ from telebot_views.models import UserStateCb
 from project.db.models.words import UserWordGroupModel, UserWordModel, UserWordModelManager, WordModel
 from project.services.audios import concat_audios
 from project.services.text_to_speech import add_voices_to_word
-from project.views.word_learn_views.utils import MAX_WORDS_FOR_AUDIO, MIN_WORDS_TO_START_GAME
+from project.views.word_learn.utils import MAX_WORDS_FOR_AUDIO, MIN_WORDS_TO_START_GAME
 
 
 class LearnWordsMessageSender(BaseMessageSender):

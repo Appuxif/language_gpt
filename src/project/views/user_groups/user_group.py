@@ -5,7 +5,7 @@ from telebot_views.base import BaseMessageSender, BaseView
 from telebot_views.models import UserStateCb
 
 from project.db.models.words import UserWordGroupModel, UserWordModel, WordGroupModel
-from project.views.word_learn_views.utils import MIN_WORDS_TO_START_GAME
+from project.views.word_learn.utils import MIN_WORDS_TO_START_GAME
 
 
 class UserGroupMessageSender(BaseMessageSender):
