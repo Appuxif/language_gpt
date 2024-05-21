@@ -46,6 +46,7 @@ readme = "README.md"
 packages = [
     {include = "project", from = "src"},
     {include = "poetry_scripts", from = "src"},
+    {include = "project_scripts", from = "src"},
 ]
 
 [tool.poetry.dependencies]
