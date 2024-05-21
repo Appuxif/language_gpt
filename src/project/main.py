@@ -10,6 +10,7 @@ from telebot_views.utils import now_utc
 import project
 from project.core.bot import bot, reports_bot
 from project.core.settings import GENERAL
+from project.db.models.reviews import init_reviews_collection
 from project.db.mongodb import get_database
 from project.views.routes import routes
 
@@ -42,17 +43,22 @@ async def run():
     loop = asyncio.get_running_loop()
     for signame in ('SIGINT', 'SIGTERM'):
         loop.add_signal_handler(getattr(signal, signame), functools.partial(_ask_exit, signame, loop))
-    _task = asyncio.create_task(task_clear_cache())
     await get_database().list_collection_names()
+    _ = loop.create_task(init_reviews_collection())
+
+    long_running_tasks = [
+        loop.create_task(task_clear_cache()),
+    ]
     await bot.delete_webhook()
     await bot.polling(non_stop=True, skip_pending=True)
-    await _task
+    await asyncio.gather(*long_running_tasks)
 
 
-def run_loop():
+def run_loop(func=run):
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(run())
+        loop.run_until_complete(_init_bot())
+        loop.run_until_complete(func())
     except (KeyboardInterrupt, SystemExit):
         logger.info('Caught KeyboardInterrupt')
     finally:
@@ -62,6 +68,10 @@ def run_loop():
         loop.run_until_complete(loop.shutdown_default_executor())
         loop.close()
         logger.info('Loop closed')
+
+
+async def _init_bot() -> None:
+    bot._user = await bot.get_me()  # pylint: disable=protected-access
 
 
 def _ask_exit(_signame, _loop: asyncio.BaseEventLoop):

@@ -2759,13 +2759,13 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "telebot_models"
-version = "0.0.7"
+version = "1.0.0"
 description = ""
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "0.0.7.tar.gz", hash = "sha256:02889b47d0619d51afcaa0173d4fd69696cb6125d078f668bf3a5183c69d788c"},
+    {file = "1.0.0.tar.gz", hash = "sha256:06e6f37c023e721d8befad937bca58ad7516904cf44c80190a4d4526133d3902"},
 ]
 
 [package.dependencies]
@@ -2775,27 +2775,27 @@ pymongo = ">=4.3.3,<5.0.0"
 
 [package.source]
 type = "url"
-url = "https://github.com/Appuxif/telebot_models/archive/refs/tags/0.0.7.tar.gz"
+url = "https://github.com/Appuxif/telebot_models/archive/refs/tags/1.0.0.tar.gz"
 [[package]]
 name = "telebot_views"
-version = "0.0.24"
+version = "1.1.1"
 description = ""
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "0.0.24.tar.gz", hash = "sha256:02eb7fa64165673e386f2084cdef71a755a56fb6448107213f55ad5f8fa1b6f4"},
+    {file = "1.1.1.tar.gz", hash = "sha256:75c77e060fd97033c49a21d9e70ef239073068d607ea882dc9e84684b228a27c"},
 ]
 
 [package.dependencies]
 asyncio_functools = ">=0.0.1,<1.0.0"
 pydantic = ">=1.10.9,<1.20.0"
 pytelegrambotapi = ">=4.10.0,<5.0.0"
-telebot_models = ">=0.0.2,<1.0.0"
+telebot_models = ">=1.0.0,<2.0.0"
 
 [package.source]
 type = "url"
-url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/0.0.24.tar.gz"
+url = "https://github.com/Appuxif/telebot_views/archive/refs/tags/1.1.1.tar.gz"
 [[package]]
 name = "toml"
 version = "0.10.2"
@@ -3243,4 +3243,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "eccbcb4dac58e5add23d19a2a8529030aa469962704a8c0669d6b5b90a477472"
+content-hash = "53164db92f59a900ec3ccf6ac225916a44a79eb0a08f57da85ddf7fbea2677ec"

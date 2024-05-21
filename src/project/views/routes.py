@@ -2,14 +2,17 @@ from telebot_views.base import Route
 from telebot_views.views.links_view import LinksView
 
 from project.views.admin.main import MainAdminView
+from project.views.admin.review import ReviewDetailAdminView
+from project.views.admin.reviews import ReviewsAdminView, ReviewsAdminViewProxy
 from project.views.admin.user import UserDetailAdminView
-from project.views.admin.users import UsersAdminView
+from project.views.admin.users import UsersAdminView, UsersAdminViewProxy
 from project.views.check_sub import CheckSubView
 from project.views.main import MainView
 from project.views.public_groups.copy_public_group import CopyPublicGroupView
 from project.views.public_groups.public_group import PublicGroupView
 from project.views.public_groups.public_groups import PublicGroupsView
 from project.views.public_groups.public_word import PublicWordView
+from project.views.reviews import ReviewsView
 from project.views.user_groups.create_user_group import CreateUserGroupView
 from project.views.user_groups.delete_user_group import DeleteUserGroupView
 from project.views.user_groups.publish_user_group import PublishUserGroupView
@@ -29,6 +32,7 @@ routes = [
     Route(CheckSubView),
     Route(MainView),
     Route(LinksView),
+    Route(ReviewsView),
 ]
 
 # user groups
@@ -68,5 +72,9 @@ routes += [
 routes += [
     Route(MainAdminView),
     Route(UsersAdminView),
+    Route(UsersAdminViewProxy),
     Route(UserDetailAdminView),
+    Route(ReviewsAdminView),
+    Route(ReviewsAdminViewProxy),
+    Route(ReviewDetailAdminView),
 ]

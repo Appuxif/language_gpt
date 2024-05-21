@@ -28,8 +28,9 @@ class MainAdminMessageSender(BaseMessageSender):
 
         return [
             [await self.view.buttons.btn('Вызвать ошибку', error_cb)],
-            [await self.view.buttons.view_btn(r['USERS_ADMIN_VIEW'], 0)],
+            [await self.view.buttons.view_btn(r['USERS_ADMIN_VIEW_PROXY'], 0)],
             [await self.view.buttons.btn('Слова', words_cb)],
+            [await self.view.buttons.view_btn(r['REVIEWS_ADMIN_VIEW_PROXY'], 0)],
             [await self.view.buttons.view_btn(r['MAIN_VIEW'], 0)],
         ]
 
