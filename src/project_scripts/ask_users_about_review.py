@@ -1,8 +1,9 @@
 """Рассылает уведомление "Оставь отзыв" всем пользователям, которые еще ни разу не оставляли отзыв."""
 
 import asyncio
-from datetime import timedelta
+from datetime import datetime, timedelta
 from logging import getLogger
+from typing import Any
 
 from asyncio_functools import async_lru_cache
 from bson import ObjectId
@@ -25,47 +26,20 @@ def run() -> None:
 
 
 async def _run():
-    manager = (
-        get_user_model()
-        .manager()
-        .filter(
-            {
-                'is_available': True,
-                '_id': {'$lt': ObjectId.from_datetime(now_utc() - timedelta(days=7))},
-                '$and': [
-                    {
-                        '$or': [
-                            {f'constants.{reviews.REVIEWS_INFO_KEY}': None},
-                            {f'constants.{reviews.REVIEWS_INFO_KEY}.is_waiting_for_review': None},
-                            {f'constants.{reviews.REVIEWS_INFO_KEY}.is_waiting_for_review': False},
-                        ]
-                    },
-                    {
-                        '$or': [
-                            {f'constants.{reviews.REVIEWS_INFO_KEY}.last_review_at': None},
-                            {
-                                f'constants.{reviews.REVIEWS_INFO_KEY}.last_review_at': {
-                                    '$lt': ObjectId.from_datetime(now_utc() - timedelta(days=30))
-                                }
-                            },
-                        ]
-                    },
-                ],
-            }
-        )
-    )
+    last_id = ObjectId.from_datetime(datetime(2000, 1, 1))
+    manager = get_user_model().manager().filter(_get_filter(last_id))
 
     total = await manager.count()
+    total_count = 0
     page_size = 30
     page_num = 0
     logger.info('Starting sending notifications to %s users by chunks', total)
     while True:
         page_num += 1
         logger.info('Sending notifications for chunk %s...', page_num)
-        chunk = await manager.find_all(
+        chunk = await manager.filter(_get_filter(last_id)).find_all(
             sort=[('_id', 1)],
             limit=page_size,
-            skip=(page_num - 1) * page_size,
         )
         if not chunk:
             logger.info('Users not found. Break')
@@ -73,11 +47,39 @@ async def _run():
         logger.info('Got %s users', len(chunk))
 
         for user in chunk:
+            last_id = user.id
+            total_count += 1
             await send_notification(user)
         logger.info('Sleeping...')
         await asyncio.sleep(1.1)
 
-    logger.info('Notifications finished')
+    logger.info('Notifications finished: total sent: %s of %s', total_count, total)
+
+
+def _get_filter(last_id: ObjectId) -> dict[Any, Any]:
+    return {
+        'is_available': True,
+        '_id': {'$gt': last_id, '$lt': ObjectId.from_datetime(now_utc() - timedelta(days=7))},
+        '$and': [
+            {
+                '$or': [
+                    {f'constants.{reviews.REVIEWS_INFO_KEY}': None},
+                    {f'constants.{reviews.REVIEWS_INFO_KEY}.is_waiting_for_review': None},
+                    {f'constants.{reviews.REVIEWS_INFO_KEY}.is_waiting_for_review': False},
+                ]
+            },
+            {
+                '$or': [
+                    {f'constants.{reviews.REVIEWS_INFO_KEY}.last_review_at': None},
+                    {
+                        f'constants.{reviews.REVIEWS_INFO_KEY}.last_review_at': {
+                            '$lt': ObjectId.from_datetime(now_utc() - timedelta(days=30))
+                        }
+                    },
+                ]
+            },
+        ],
+    }
 
 
 async def send_notification(user: UserModel) -> None:
@@ -103,7 +105,7 @@ async def send_notification(user: UserModel) -> None:
             or 'bots can\'t send messages to bots' in err.description
         ):
             await get_user_model().manager().filter({'_id': user.id}).update_many({'$set': {'is_available': False}})
-            logger.info('%s. User % is not available any more', err.description, user.user_id)
+            logger.info('%s. User %s is not available any more', err.description, user.user_id)
         else:
             raise
     logger.info('Sending notification for user %s finished', user.id)
